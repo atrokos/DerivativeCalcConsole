@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using AngouriMath;
 using ArithmeticParser;
-using ExpressionTree;
 
 namespace DerivativeCalc
 {
@@ -10,7 +8,9 @@ namespace DerivativeCalc
     {
         static void Main(string[] args)
         {
-            
+            Expression expression = new("2x");
+            expression.Show();
+
         }
     }
 }

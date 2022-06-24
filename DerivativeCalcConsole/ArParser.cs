@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using AngouriMath;
+using ExprTree;
 
 namespace ArithmeticParser
 {
@@ -8,6 +9,8 @@ namespace ArithmeticParser
     {
         static readonly HashSet<string> functions = new HashSet<string> { "sin", "cos", "tg", "cotg", "abs", "sqrt" };
         static readonly HashSet<string> operators = new HashSet<string> { "+", "-", "*", "/", "^" };
+        Head tree;
+
         private List<string> expr = new();
         public List<string> Expr
         {
@@ -15,7 +18,7 @@ namespace ArithmeticParser
             private set { expr = value; }
         }
 
-        public Expression(string newexpr) 
+        public Expression(string newexpr)
         {
             Entity newexpression = newexpr;
             string[] simplified = newexpression.Simplify().ToString().Split(' ');
@@ -73,7 +76,6 @@ namespace ArithmeticParser
                     return 0;
             }
         }
-
         public void Show()
         {
             for (int i = 0; i < expr.Count; i++)
@@ -150,5 +152,8 @@ namespace ArithmeticParser
             expr = prefix;
         }
 
+        public void ToTree()
+        {
+        }
     }
 }

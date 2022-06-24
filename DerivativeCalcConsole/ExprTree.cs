@@ -1,242 +1,385 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Resources;
 
-namespace ExpressionTree
+
+namespace ExprTree
 {
-    internal class ExpressionTree
+    interface INode
     {
-        interface INode
+        public void Differentiate();
+        public void SelfCheck();
+        public void Add(INode node);
+        public void Remove(INode node);
+    }
+    abstract class OPNode : INode
+    {
+        public INode leftchild, rightchild;
+        public OPNode parent = null;
+
+        public OPNode Parent
         {
-            public void Differentiate();
-            public void SelfCheck();
-            public void ChangeParent(OPNode newParent, INode oldchild);
+            get { return parent; }
+            set { parent = value; }
         }
-        abstract class OPNode : INode
+
+        abstract public void SelfCheck();
+
+        public virtual void Add(INode node)
         {
-            public INode[] children = new INode[2];
-            public OPNode parent = null;
-
-            public OPNode Parent
-            {
-                get { return parent; }
-            }
-
-            public void ChangeParent(OPNode newparent, INode oldchild)
-            {
-                if (parent != null)
-                    parent.Remove(this);
-
-                parent = newparent;
-
-                if (oldchild != null)
-                    newparent.Remove(oldchild);
-
-                if (newparent != null)
-                    newparent.Add(this);
-            }
-            abstract public void SelfCheck();
-
-            public void Add(INode node)
-            {
-                for (int i = 0; i < children.Length; i++)
-                {
-                    if (children[i] == null)
-                    {
-                        children[i] = node;
-                        return;
-                    }
-                }
-                return;
-            }
-
-            public void SetChildren(INode first, INode second)
-            {
-                children[0] = first;
-                children[1] = second;
-            }
-
-            public void Remove(INode node)
-            {
-                for (int i = 0; i < children.Length; i++)
-                {
-                    if (children[i] == node)
-                    {
-                        children[i] = null;
-                        return;
-                    }
-                }
-                return;
-            }
-
-            abstract public void Differentiate();
+            //TODO Implement Add so that it handles ALL add operations
         }
-        abstract class ConstNode : INode
+
+        public void SetChildren(INode first, INode second)
         {
-            public OPNode parent;
-
-            public OPNode Parent
-            {
-                get { return parent; }
-                set { parent = value; }
-            }
-            public void ChangeParent(OPNode newparent, INode oldchild)
-            {
-                if (parent != null)
-                    parent.Remove(this);
-                parent = newparent;
-                if (oldchild != null)
-                    newparent.Remove(oldchild);
-
-                if (newparent != null)
-                    newparent.Add(this);
-            }
-            abstract public void SelfCheck();
-
-            public void Differentiate()
-            {
-                Parent.Remove(this);
-            }
+            leftchild = first;
+            rightchild = second;
         }
-        sealed class DiffVariable : ConstNode
-        {
-            public DiffVariable(OPNode parent)
-            {
-                ChangeParent(parent, null);
-            }
-            public override void SelfCheck()
-            {
 
-            }
+        public virtual void Remove(INode node)
+        {
+            //TODO Implement Remove so that it handles ALL remove operations
         }
-        sealed class Constant : ConstNode
+        abstract public void Differentiate();
+    }
+    abstract class ConstNode : INode
+    {
+        public OPNode parent;
+
+        public OPNode Parent
         {
-            double value;
-
-            public Constant(double value)
-            {
-                ChangeParent(parent, null);
-            }
-
-            public override void SelfCheck()
-            {
-                if (value == 1)
-                    ChangeParent(null, null);
-            }
-            public double Value
-            {
-                get { return value; }
-                set { this.value = value; }
-            }
+            get { return parent; }
+            set { parent = value; }
         }
-        sealed class Plus : OPNode
+        abstract public void SelfCheck();
+        abstract public void Differentiate();
+
+        public void Add(INode node)
         {
-            public Plus(OPNode parent)
-            {
-                ChangeParent(parent, null);
-            }
+            return;
+        }
 
-            public override void SelfCheck()
-            {
-                
-            }
+        public void Remove(INode node)
+        {
+            return;
+        }
+    }
+    sealed class DiffVariable : ConstNode
+    {
+        public DiffVariable(OPNode parent)
+        {
+            parent.Add(this);
+        }
+        public override void SelfCheck()
+        {
+            return;
+        }
 
-            public override void Differentiate()
+        public override void Differentiate()
+        {
+            Constant one = new(1, Parent);
+
+        }
+
+    }
+    sealed class Constant : ConstNode
+    {
+        double value;
+        public double Value
+        {
+            get { return value; }
+            set { this.value = value; }
+        }
+
+        public Constant(double value, OPNode parent)
+        {
+            this.value = value;
+            Parent = parent;
+        }
+
+        public override void SelfCheck()
+        {
+            return;
+        }
+        public override void Differentiate()
+        {
+            return;
+        }
+    }
+    class Head : OPNode
+    {
+        public Head()
+        {
+
+        }
+
+        public override void Differentiate()
+        {
+            leftchild.Differentiate();
+        }
+
+        public override void SelfCheck()
+        {
+            leftchild.SelfCheck();
+        }
+
+        public override void Add(INode node)
+        {
+            if (leftchild == null)
             {
-                children[0].Differentiate();
-                children[1].Differentiate();
+                leftchild = node;
+                node.ChangeParent(this);
             }
         }
-        sealed class Minus : OPNode
+
+        public override void Remove(INode node)
         {
-            public Minus(OPNode parent)
+            if (leftchild == node)
             {
-                ChangeParent(parent, null);
-            }
-
-            public override void SelfCheck()
-            {
-
-            }
-
-            public override void Differentiate()
-            {
-                children[0].Differentiate();
-                children[1].Differentiate();
-            }
-        }
-        sealed class Multi : OPNode
-        {
-            public Multi(OPNode parent)
-            {
-                ChangeParent(parent, null);
-            }
-            public override void SelfCheck()
-            {
-                if (children[0] is Constant constant)
-                {
-                    
-                }
-                else if (children[0] == null || children[1] == null)
-                {
-                    foreach (INode child in children)
-                    {
-                        if (child != null)
-                        {
-                            child.ChangeParent(this.parent, this);
-                            return;
-                        }
-                    }
-                    parent.Remove(this);
-                    parent = null;
-                }
-                
-
-            }
-
-            public override void Differentiate()
-            {
-                Plus plus = new(this);
-                Multi first = new(plus);
-                Multi second = new(plus);
-
-                first.SetChildren(children[0], children[1]);
-                first.children[0].Differentiate();
-
-                second.SetChildren(children[0], children[1]);
-                second.children[1].Differentiate();
-
-                plus.SetChildren(first, second);
-            }
-        }
-        sealed class Divi : OPNode
-        {
-            public Divi(OPNode parent)
-            {
-                ChangeParent(parent, null);
-            }
-            public override void SelfCheck()
-            {
-                if (children[0] == null || children[1] == null)
-                {
-                    foreach (INode child in children)
-                    {
-                        if (child != null)
-                        {
-                            child.ChangeParent(this.parent, this);
-                            return;
-                        }
-                    }
-                    parent.ChangeParent(null, this);
-                }
-            }
-
-            public override void Differentiate()
-            {
-
+                node.ChangeParent(null);
+                leftchild = null;
             }
         }
     }
+    sealed class Plus : OPNode
+    {
+        public Plus(OPNode parent)
+        {
+            Parent = parent;
+        }
+
+        public override void SelfCheck()
+        {
+            if (leftchild is Constant && rightchild is Constant)
+            {
+                var first = (Constant)leftchild;
+                var second = (Constant)rightchild;
+
+                first.Value += second.Value;
+                Parent.Remove(this);
+                first.ChangeParent(Parent);
+            }
+            if (leftchild is Constant)
+            {
+                var first = (Constant)leftchild;
+
+                if (first.Value == 0)
+                {
+                    rightchild.ChangeParent(Parent);
+                    Parent.Remove(this);
+                }
+            }
+            else if (rightchild is Constant)
+            {
+                var second = (Constant)rightchild;
+
+                if (second.Value == 0)
+                {
+                    leftchild.ChangeParent(Parent);
+                    Parent.Remove(this);
+                }
+            }
+        }
+
+        public override void Differentiate()
+        {
+            leftchild.Differentiate();
+            rightchild.Differentiate();
+            SelfCheck();
+        }
+    }
+    sealed class Minus : OPNode
+    {
+        public Minus(OPNode parent)
+        {
+            Parent = parent;
+        }
+
+        public override void SelfCheck()
+        {
+            if (leftchild is Constant && rightchild is Constant)
+            {
+                var first = (Constant)leftchild;
+                var second = (Constant)rightchild;
+
+                first.Value -= second.Value;
+
+                OPNode oldparent = Parent;
+                Parent.Remove(this);
+                first.ChangeParent(oldparent);
+            }
+            if (leftchild is Constant)
+            {
+                var first = (Constant)leftchild;
+
+                if (first.Value == 0)
+                {
+                    OPNode oldparent = Parent;
+                    Parent.Remove(this);
+                    oldparent.Add(rightchild);
+                }
+            }
+            else if (rightchild is Constant)
+            {
+                var second = (Constant)rightchild;
+
+                if (second.Value == 0)
+                {
+                    OPNode oldparent = Parent;
+                    Parent.Remove(this);
+                    oldparent.Add(leftchild);
+                }
+            }
+        }
+
+        public override void Differentiate()
+        {
+            leftchild.Differentiate();
+            rightchild.Differentiate();
+            SelfCheck();
+        }
+    }
+    sealed class Multi : OPNode
+    {
+        public Multi(OPNode parent)
+        {
+            Parent = parent;
+        }
+        public override void SelfCheck()
+        {
+                
+        }
+
+        public override void Differentiate()
+        {
+            Plus plus = new(Parent);
+            Multi first = new(plus);
+            Multi second = new(plus);
+
+            first.SetChildren(leftchild, rightchild);
+            first.leftchild.Differentiate();
+            first.SelfCheck();
+
+            second.SetChildren(leftchild, rightchild);
+            second.rightchild.Differentiate();
+            second.SelfCheck();
+
+            plus.SetChildren(first, second);
+
+            OPNode oldparent = Parent;
+            Parent.Remove(this);
+            oldparent.Add(plus);
+            plus.SelfCheck();
+        }
+    }
+    sealed class Divi : OPNode
+    {
+        public Divi(OPNode parent)
+        {
+            Parent = parent;
+        }
+        public override void SelfCheck()
+        {
+            if (leftchild is Constant && rightchild is Constant)
+            {
+                var first = (Constant)leftchild;
+                var second = (Constant)rightchild;
+                if (second.Value == 0)
+                {
+                    Console.WriteLine("Division by zero!");
+                    return;
+                }
+                first.Value /= second.Value;
+
+                OPNode oldparent = Parent;
+                Parent.Remove(this);
+                oldparent.Add(first);
+            }
+            if (leftchild is Constant)
+            {
+                var first = (Constant)leftchild;
+
+                if (first.Value == 0)
+                {
+                    Parent.Remove(this);
+                }
+            }
+            else if (rightchild is Constant)
+            {
+                var second = (Constant)rightchild;
+
+                if (second.Value == 0)
+                {
+                    Console.WriteLine("Division by zero!");
+                    return;
+                }
+                else if (second.Value == 1)
+                {
+                    OPNode oldparent = Parent;
+                    Parent.Remove(this);
+                    oldparent.Add(leftchild);
+                }
+                else if (second.Value == -1)
+                {
+
+                }
+            }
+        }
+
+        public override void Differentiate()
+        {
+
+        }
+    }
+    sealed class Power : OPNode
+    {
+        public Power(OPNode parent)
+        {
+            Parent = parent;
+        }
+        public override void SelfCheck()
+        {
+            if (leftchild is Constant && rightchild is Constant)
+            {
+                var first = (Constant)leftchild;
+                var second = (Constant)rightchild;
+                if (second.Value == 0)
+                {
+                    Console.WriteLine("Division by zero!");
+                    return;
+                }
+                first.Value /= second.Value;
+
+                OPNode oldparent = Parent;
+                Parent.Remove(this);
+                oldparent.Add(first);
+            }
+            if (leftchild is Constant)
+            {
+                var first = (Constant)leftchild;
+
+                if (first.Value == 0)
+                {
+                    rightchild.ChangeParent(Parent);
+                    Parent.Remove(this);
+                }
+            }
+            else if (rightchild is Constant)
+            {
+                var second = (Constant)rightchild;
+
+                if (second.Value == 0)
+                {
+                    leftchild.ChangeParent(Parent);
+                    Parent.Remove(this);
+                }
+            }
+        }
+
+        public override void Differentiate()
+        {
+
+        }
+    }
+    
 }
