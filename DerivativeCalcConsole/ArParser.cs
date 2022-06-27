@@ -7,25 +7,22 @@ namespace ArithmeticParser
 {
     class Expression
     {
-        static readonly HashSet<string> functions = new HashSet<string> { "sin", "cos", "tg", "cotg", "abs", "sqrt" };
+        static readonly HashSet<string> functions = new HashSet<string> { "sin", "cos", "tg", "cotg", "abs", "sqrt", "ln" };
         static readonly HashSet<string> operators = new HashSet<string> { "+", "-", "*", "/", "^" };
+        string VAR;
+        int pos = 0;
         Head tree;
+        List<string> expr = new();
+        List<string> diffexpr = new();
 
-        private List<string> expr = new();
-        public List<string> Expr
-        {
-            get { return expr; }
-            private set { expr = value; }
-        }
-
-        public Expression(string newexpr)
+        public Expression(string newexpr, string vAR)
         {
             Entity newexpression = newexpr;
             string[] simplified = newexpression.Simplify().ToString().Split(' ');
             Prepare(simplified);
             ToPrefix();
+            VAR = vAR;
         }
-
         void Prepare(string[] simplified) // Adds the expression as a List in expr
         {
             for (int i = 0; i < simplified.Length; i++)
@@ -80,6 +77,11 @@ namespace ArithmeticParser
         {
             for (int i = 0; i < expr.Count; i++)
                 Console.Write(expr[i] + ' ');
+        }
+        public void ShowDiff()
+        {
+            for (int i = 0; i < diffexpr.Count; i++)
+                Console.Write(diffexpr[i] + ' ');
         }
         void ToPrefix()
         {
@@ -151,9 +153,142 @@ namespace ArithmeticParser
             prefix.Reverse();
             expr = prefix;
         }
-
-        public void ToTree()
+        void PrefixToTree()
         {
+            Head node = new();
+            node.Add(buildTree());
+            tree = node;
+        }
+        INode buildTree()
+        {
+            INode node = null;
+            
+            if (!operators.Contains(expr[pos]) && expr[pos] != VAR) //It is a number
+            {
+                double val = Convert.ToDouble(expr[pos]);
+                Constant constant = new(val, null);
+                node = constant;
+            }
+            else if (expr[pos] == VAR) //It is a derivative variable
+            {
+                DiffVariable variable = new(null);
+                node = variable;
+            }
+            else //It is an operator
+            {
+                switch (expr[pos])
+                {
+                    case "+":
+                        Plus plus = new(null);
+                        pos++;
+                        plus.Add(buildTree());
+
+                        pos++;
+                        plus.Add(buildTree());
+                        node = plus;
+                        break;
+
+                    case "-":
+                        Minus minus = new(null);
+                        pos++;
+                        minus.Add(buildTree());
+
+                        pos++;
+                        minus.Add(buildTree());
+                        node = minus;
+                        break;
+
+                    case "*":
+                        Multi multi = new(null);
+                        pos++;
+                        multi.Add(buildTree());
+
+                        pos++;
+                        multi.Add(buildTree());
+                        node = multi;
+                        break;
+
+                    case "/":
+                        Divi divi = new(null);
+                        pos++;
+                        divi.Add(buildTree());
+
+                        pos++;
+                        divi.Add(buildTree());
+                        node = divi;
+                        break;
+
+                    case "^":
+                        Power power = new(null);
+                        pos++;
+                        power.Add(buildTree());
+
+                        pos++;
+                        power.Add(buildTree());
+                        node = power;
+                        break;
+                }
+            }
+            return node;
+        }
+        public void Differentiate()
+        {
+            PrefixToTree();
+            tree.Differentiate();
+            TreeToPrefix();
+        }
+        void TreeToPrefix()
+        {
+            Stack<INode> stack = new();
+
+            stack.Push(tree.leftchild);
+
+            while (stack.Count > 0)
+            {
+                INode node = stack.Pop();
+                if (node is Constant constant)
+                {
+                    double val = constant.Value;
+                    diffexpr.Add(val.ToString("G"));
+                }
+                else if (node is DiffVariable)
+                {
+                    diffexpr.Add(VAR);
+                }
+                else if (node is OPNode opnode)
+                {
+                    if (node is Plus)
+                    {
+                        diffexpr.Add("+");
+                        stack.Push(opnode.rightchild);
+                        stack.Push(opnode.leftchild);
+                    }
+                    else if (node is Minus)
+                    {
+                        diffexpr.Add("-");
+                        stack.Push(opnode.rightchild);
+                        stack.Push(opnode.leftchild);
+                    }
+                    else if (node is Multi)
+                    {
+                        diffexpr.Add("*");
+                        stack.Push(opnode.rightchild);
+                        stack.Push(opnode.leftchild);
+                    }
+                    else if (node is Divi)
+                    {
+                        diffexpr.Add("/");
+                        stack.Push(opnode.rightchild);
+                        stack.Push(opnode.leftchild);
+                    }
+                    else if (node is Power)
+                    {
+                        diffexpr.Add("^");
+                        stack.Push(opnode.rightchild);
+                        stack.Push(opnode.leftchild);
+                    }
+                }
+            }
         }
     }
 }
