@@ -10,11 +10,10 @@ namespace DerivativeCalc
     {
         static void Main(string[] args)
         {
-            Expression expression = new("x", "x"); //+ + 2 * 2 ^ x 2 * 5 x
+            Expression expression = new("(2x+5)/x", "x");
             expression.Show();
             expression.Differentiate();
-            Console.WriteLine();
-            expression.ShowDiff();
+            expression.Show();
         }
     }
 }

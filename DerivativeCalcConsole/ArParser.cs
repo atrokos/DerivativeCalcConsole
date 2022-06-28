@@ -77,11 +77,7 @@ namespace ArithmeticParser
         {
             for (int i = 0; i < expr.Count; i++)
                 Console.Write(expr[i] + ' ');
-        }
-        public void ShowDiff()
-        {
-            for (int i = 0; i < diffexpr.Count; i++)
-                Console.Write(diffexpr[i] + ' ');
+            Console.WriteLine();
         }
         void ToPrefix()
         {
@@ -236,6 +232,7 @@ namespace ArithmeticParser
             PrefixToTree();
             tree.Differentiate();
             TreeToPrefix();
+            expr = diffexpr;
         }
         void TreeToPrefix()
         {
@@ -290,5 +287,10 @@ namespace ArithmeticParser
                 }
             }
         }
+        //List<string> PrefixToInfix(List<string> expression)
+        //{
+        //    List<string> result = new List<string>();
+
+        //}
     }
 }
