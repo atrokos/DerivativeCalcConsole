@@ -24,6 +24,25 @@ namespace ArithmeticParser
             ToPrefix();
             VAR = vAR;
         }
+        double StringToDouble(string number)
+        {
+            double result = 0;
+            try
+            {
+                result = Double.Parse(number);
+            }
+            catch (FormatException) // If it fails, it has to be division (AngouriMath.Simplify does not output any other types of numbers like that)
+            {
+                int divpos = 0;
+                for (int i = 0; i < number.Length; i++) // Find the '/'
+                {
+                    if (number[i] == '/')
+                        divpos = i;
+                }
+                result = Double.Parse(number[0..^(divpos + 1)]) / Double.Parse(number[(divpos + 1)..]);
+            }
+            return result;
+        }
         void Prepare(string[] simplified) // Adds the expression as a List in expr
         {
             for (int i = 0; i < simplified.Length; i++)
@@ -85,8 +104,7 @@ namespace ArithmeticParser
             //for (int i = 0; i < expr.Count; i++)
             //    Console.Write(expr[i] + ' ');
             //Console.WriteLine();
-            Entity resultingexpression = result;
-            Console.WriteLine(resultingexpression.Simplify());
+            Console.WriteLine(result);
         }
         void ToPrefix()
         {
@@ -170,7 +188,7 @@ namespace ArithmeticParser
             
             if (!operators.Contains(expr[pos]) && expr[pos] != VAR) //It is a number
             {
-                double val = Convert.ToDouble(expr[pos]);
+                double val = StringToDouble(expr[pos]);
                 Constant constant = new(val, null);
                 node = constant;
             }
