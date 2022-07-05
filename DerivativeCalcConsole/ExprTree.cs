@@ -362,7 +362,7 @@ namespace ExprTree
 
             second.SetChildren(leftchild, rightchild);
             second.rightchild.Differentiate();
-            //second.SelfCheck();
+            second.SelfCheck();
 
             OPNode oldparent = GetParent();
             GetParent().Remove(this);
@@ -429,39 +429,7 @@ namespace ExprTree
 
         public override void Differentiate()
         {
-            Divi newdivi = new(null);
-
-            Minus minus = new(null);
-            Power power = new(null);
-            newdivi.Add(minus);
-            newdivi.Add(power);
-
-            Multi left = new(minus);
-            Multi right = new(minus);
-
-            INode rightpower = rightchild.Clone();
-            INode left1 = leftchild.Clone();
-            INode right1 = rightchild.Clone();
-
-            left.SetChildren(left1, right1); //F'G
-            left.leftchild.Differentiate();
-            left.SelfCheck();
-
-            right.SetChildren(leftchild, rightchild); //FG'
-            right.rightchild.Differentiate();
-            right.SelfCheck();
-
-            power.Add(rightpower); //G^2
-            Constant two = new(2, null);
-            power.Add(two);
-            power.SelfCheck();
-
-            minus.SelfCheck();
-            newdivi.SelfCheck();
-
-            OPNode oldparent = GetParent();
-            oldparent.Remove(this);
-            oldparent.Add(newdivi);
+            //TODO (URGENT) Add division differentiation
         }
         public override INode Clone()
         {
@@ -522,6 +490,17 @@ namespace ExprTree
                     multi.MultiplyBy(m.Value);
                     m.Value -= 1;
                 }
+                else
+                {
+                    Multi newmulti = new(null);
+                    Constant constant = new(m.Value, null);
+                    m.Value -= 1;
+
+                    INode oldparent = GetParent();
+                    oldparent.Remove(this);
+                    newmulti.SetChildren(constant, this);
+                    oldparent.Add(newmulti);
+                }
             }
             else if (leftchild is Constant a && rightchild is DiffVariable x2) //a^x
             {
@@ -535,7 +514,6 @@ namespace ExprTree
             {
 
             }
-            SelfCheck();
         }
         public override INode Clone()
         {
