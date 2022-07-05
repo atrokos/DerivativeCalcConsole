@@ -11,6 +11,7 @@ namespace ArithmeticParser
         static readonly HashSet<string> operators = new HashSet<string> { "+", "-", "*", "/", "^" };
         string VAR;
         int pos = 0;
+        string result = null;
         Head tree;
         List<string> expr = new();
         List<string> diffexpr = new();
@@ -30,19 +31,25 @@ namespace ArithmeticParser
                 string current = simplified[i];
                 if (current.Length > 1)
                 {
-                    if (Char.IsLetter(current[0]) && functions.Contains(current))
+                    if (functions.Contains(current))
                         expr.Add(current);
                     else if (Char.IsDigit(current[0]))
                         expr.Add(current);
+                    else if (current[0] == '(' && current[^1] == ')')
+                    {
+                        expr.Add("(");
+                        expr.Add((string)current[1..^1]);
+                        expr.Add(")");
+                    }
                     else if (current[0] == '(')
                     {
-                        expr.Add(Char.ToString(current[0]));
-                        expr.Add(current.Substring(1));
+                        expr.Add("(");
+                        expr.Add(current[1..]);
                     }
                     else if (current[^1] == ')')
                     {
-                        expr.Add(current.Substring(0, current.Length - 1));
-                        expr.Add(Char.ToString(current[^1]));
+                        expr.Add(current[..^1]);
+                        expr.Add(")");
                     }
                     else
                     {
@@ -73,11 +80,13 @@ namespace ArithmeticParser
                     return 0;
             }
         }
-        public void Show()
+        public void ShowResult()
         {
-            for (int i = 0; i < expr.Count; i++)
-                Console.Write(expr[i] + ' ');
-            Console.WriteLine();
+            //for (int i = 0; i < expr.Count; i++)
+            //    Console.Write(expr[i] + ' ');
+            //Console.WriteLine();
+            Entity resultingexpression = result;
+            Console.WriteLine(resultingexpression.Simplify());
         }
         void ToPrefix()
         {
@@ -233,6 +242,7 @@ namespace ArithmeticParser
             tree.Differentiate();
             TreeToPrefix();
             expr = diffexpr;
+            PrefixToInfix();
         }
         void TreeToPrefix()
         {
@@ -287,10 +297,27 @@ namespace ArithmeticParser
                 }
             }
         }
-        //List<string> PrefixToInfix(List<string> expression)
-        //{
-        //    List<string> result = new List<string>();
+        void PrefixToInfix()
+        {
+            Stack<string> stack = new();
 
-        //}
+            for (int i = diffexpr.Count - 1; i >= 0; i--)
+            {
+                string curr = diffexpr[i];
+                if (operators.Contains(curr))
+                {
+                    string op1 = stack.Pop();
+                    string op2 = stack.Pop();
+
+                    string temp = "(" + op1 + curr + op2 + ")";
+                    stack.Push(temp);
+                }
+                else
+                {
+                    stack.Push(curr);
+                }
+            }
+            result = stack.Pop();
+        }
     }
 }
