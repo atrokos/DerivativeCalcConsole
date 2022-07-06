@@ -348,7 +348,7 @@ namespace ExprTree
         }
         public override void Differentiate()
         {
-            Plus plus = new(GetParent());
+            Plus plus = new(null);
             Multi first = new(plus);
             Multi second = new(plus);
             plus.SetChildren(first, second);
@@ -430,6 +430,39 @@ namespace ExprTree
         public override void Differentiate()
         {
             //TODO (URGENT) Add division differentiation
+            Divi newdivi = new(null);
+
+            Minus minus = new(null);
+            Power power = new(null);
+            newdivi.SetChildren(minus, power);
+
+            INode PowerG = rightchild.Clone();
+            Constant constant = new(2, null);
+            power.SetChildren(PowerG, constant);
+
+            Multi left = new(null);
+            Multi right = new(null);
+            minus.SetChildren(left, right);
+
+            INode leftL = leftchild.Clone();
+            INode leftR = rightchild.Clone();
+            left.SetChildren(leftL, leftR);
+            leftL.Differentiate();
+            leftL.SelfCheck();
+
+            INode rightL = leftchild.Clone();
+            INode rightR = rightchild.Clone();
+            right.SetChildren(rightL, rightR);
+            rightR.Differentiate();
+            rightR.SelfCheck();
+
+
+            left.SelfCheck();
+            right.SelfCheck();
+            minus.SelfCheck();
+            INode oldparent = GetParent();
+            GetParent().Remove(this);
+            oldparent.Add(newdivi);
         }
         public override INode Clone()
         {
