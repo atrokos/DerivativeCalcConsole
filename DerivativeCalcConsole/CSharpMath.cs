@@ -22,7 +22,7 @@ namespace CSharpMath
                 VAR = vAR;
                 parser = new(VAR);
                 string[] simplified = newexpression.Simplify().ToString().Split(' ');
-                expr = parser.ExprToList(simplified);
+                expr = parser.NewExprToList(newexpression.Simplify().ToString());
                 expr = parser.ToPrefix(expr);
             }
             public override string ToString()
@@ -42,7 +42,7 @@ namespace CSharpMath
         }
         class Parser
         {
-            static readonly HashSet<string> functions = new HashSet<string> { "sin(", "cos(", "tg(", "cotg(", "abs(", "sqrt(", "ln(" };
+            static readonly HashSet<string> functions = new HashSet<string> { "sin", "cos", "tg", "cotg", "abs", "sqrt", "ln" };
             static readonly HashSet<string> operators = new HashSet<string> { "+", "-", "*", "/", "^" };
             string VAR;
             int pos;
@@ -157,9 +157,16 @@ namespace CSharpMath
 
                         } while (i < simplified.Length && simplified[i] != '(');
                         
-                        result.Add(func + "(");
-                        i++;
-                        continue;
+                        if (functions.Contains(func))
+                        {
+                            result.Add(func + "(");
+                            i++;
+                            continue;
+                        }
+                        else
+                        {
+                            throw new Exception("PARSER ERROR: UNKNOWN FUNCTION: " + func);
+                        }
                     }
                 }
                 return result;

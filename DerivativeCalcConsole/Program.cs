@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using ArithmeticParser;
-using AngouriMath;
-using ExprTree;
+using static CSharpMath.Differentiation;
 
 namespace DerivativeCalc
 {
@@ -10,10 +7,9 @@ namespace DerivativeCalc
     {
         static void Main(string[] args)
         {
-            Expression expression = new("(2x+5)/x", "x");
-            expression.Show();
-            expression.Differentiate();
-            expression.Show();
+            Expression vzorec = new("sin(x)", "x");
+            vzorec.Differentiate();
+            Console.WriteLine(vzorec);
         }
     }
 }
