@@ -36,6 +36,7 @@ namespace CSharpMath
                 tree.Differentiate();
                 expr = parser.TreeToPrefix(tree);
                 expr_string = parser.PrefixToInfix(expr);
+                Console.WriteLine(expr_string);
             }
         }
         class Parser
@@ -63,9 +64,18 @@ namespace CSharpMath
                     if (current.Length > 1)
                     {
                         if (functions.Contains(current))
+                        {
                             result.Add(current);
+                        }
+                        else if (current[^1] == ')')
+                        {
+                            result.Add(current[..^1]);
+                            result.Add(")");
+                        }
                         else if (Char.IsDigit(current[0]))
+                        {
                             result.Add(current);
+                        }
                         else if (current[0] == '(' && current[^1] == ')')
                         {
                             result.Add("(");
@@ -76,11 +86,6 @@ namespace CSharpMath
                         {
                             result.Add("(");
                             result.Add(current[1..]);
-                        }
-                        else if (current[^1] == ')')
-                        {
-                            result.Add(current[..^1]);
-                            result.Add(")");
                         }
                         else
                         {
