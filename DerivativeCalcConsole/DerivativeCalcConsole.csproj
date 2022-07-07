@@ -9,19 +9,4 @@
     <PackageReference Include="AngouriMath" Version="1.3.0" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Compile Update="errors.Designer.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>errors.resx</DependentUpon>
-    </Compile>
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Update="errors.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>errors.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
-  </ItemGroup>
-
 </Project>
