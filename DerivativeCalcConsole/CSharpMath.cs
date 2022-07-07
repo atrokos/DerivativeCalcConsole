@@ -24,6 +24,10 @@ namespace CSharpMath
                 string[] simplified = newexpression.Simplify().ToString().Split(' ');
                 expr = parser.NewExprToList(newexpression.Simplify().ToString());
                 expr = parser.ToPrefix(expr);
+                for (int i = 0; i < expr.Count; i++)
+                {
+                    Console.Write(expr[i] + ", ");
+                }
             }
             public override string ToString()
             {
@@ -159,7 +163,7 @@ namespace CSharpMath
                         
                         if (functions.Contains(func))
                         {
-                            result.Add(func + "(");
+                            result.Add(func);
                             i++;
                             continue;
                         }
@@ -216,6 +220,15 @@ namespace CSharpMath
                         {
                             operatorstack.Push(current);
                         }
+                    }
+                    else if (functions.Contains(current))
+                    {
+                        while (operatorstack.Peek() != ")")
+                        {
+                            prefix.Add(operatorstack.Pop());
+                        }
+                        operatorstack.Pop();
+                        prefix.Add(current);
                     }
                     else if (current == ")")
                     {
@@ -431,6 +444,8 @@ namespace CSharpMath
                     case "^":
                         return 3;
                     default:
+                        if (operators.Contains(oper))
+                            return 2;
                         return 0;
                 }
             }
