@@ -21,8 +21,7 @@ namespace CSharpMath
                 Entity newexpression = newexpr;
                 VAR = vAR;
                 parser = new(VAR);
-                string[] simplified = newexpression.Simplify().ToString().Split(' ');
-                expr = parser.NewExprToList(newexpression.Simplify().ToString());
+                expr = parser.ExprToList(newexpression.Simplify().ToString());
                 expr = parser.ToPrefix(expr);
             }
             public override string ToString()
@@ -37,7 +36,6 @@ namespace CSharpMath
                 expr = parser.TreeToPrefix(tree);
                 expr_string = parser.PrefixToInfix(expr);
                 parser.ResetPos();
-                Console.WriteLine(expr_string);
             }
         }
         class Parser
@@ -56,55 +54,7 @@ namespace CSharpMath
             {
                 pos = 0;
             }
-            public string Prepare(string expr)
-            {
-                return "NIC";
-            }
-            public List<string> ExprToList(string[] simplified) // Adds the expression as a List in expr
-            {
-                List<string> result = new();
-                for (int i = 0; i < simplified.Length; i++)
-                {
-                    string current = simplified[i];
-                    if (current.Length > 1)
-                    {
-                        if (functions.Contains(current))
-                        {
-                            result.Add(current);
-                        }
-                        else if (current[^1] == ')')
-                        {
-                            result.Add(current[..^1]);
-                            result.Add(")");
-                        }
-                        else if (Char.IsDigit(current[0]))
-                        {
-                            result.Add(current);
-                        }
-                        else if (current[0] == '(' && current[^1] == ')')
-                        {
-                            result.Add("(");
-                            result.Add((string)current[1..^1]);
-                            result.Add(")");
-                        }
-                        else if (current[0] == '(')
-                        {
-                            result.Add("(");
-                            result.Add(current[1..]);
-                        }
-                        else
-                        {
-                            Console.WriteLine("PARSER ERROR: Unknown function");
-                        }
-                    }
-                    else if (operators.Contains(current) || Char.IsDigit(current[0]) || Char.IsLetter(current[0]))
-                    {
-                        result.Add(current);
-                    }
-                }
-                return result;
-            }
-            public List<string> NewExprToList(string simplified)
+            public List<string> ExprToList(string simplified)
             {
                 List<string> result = new();
                 int i = 0;
@@ -307,6 +257,20 @@ namespace CSharpMath
                             stack.Push(opnode.rightchild);
                             stack.Push(opnode.leftchild);
                         }
+                        else if (node is Sin)
+                        {
+                            result.Add("sin");
+                            stack.Push(opnode.leftchild);
+                        }
+                        else if (node is Cos)
+                        {
+                            result.Add("cos");
+                            stack.Push(opnode.leftchild);
+                        }
+                        else
+                        {
+                            throw new Exception("TreeToPrefix: UNKNOWN OPTOKEN");
+                        }
                     }
                 }
                 return result;
@@ -324,6 +288,13 @@ namespace CSharpMath
                         string op2 = stack.Pop();
 
                         string temp = "(" + op1 + curr + op2 + ")";
+                        stack.Push(temp);
+                    }
+                    else if (functions.Contains(curr))
+                    {
+                        string op1 = stack.Pop();
+
+                        string temp = "(" + curr + "(" + op1 + ")" + ")";
                         stack.Push(temp);
                     }
                     else
@@ -402,6 +373,20 @@ namespace CSharpMath
                             power.Add(BuildTree(expr));
                             node = power;
                             break;
+                        case "sin":
+                            Sin sin = new();
+                            pos++;
+                            sin.Add(BuildTree(expr));
+                            node = sin;
+                            break;
+                        case "cos":
+                            Cos cos = new();
+                            pos++;
+                            cos.Add(BuildTree(expr));
+                            node = cos;
+                            break;
+                        default:
+                            throw new Exception("UNKNOWN OPTOKEN");
                     }
                 }
                 return node;
