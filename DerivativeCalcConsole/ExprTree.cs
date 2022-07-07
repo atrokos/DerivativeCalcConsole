@@ -388,7 +388,6 @@ namespace ExprTree
             }
             //!!! ONLY for 1, because -1 wouldn't make a difference
         }
-
         public override void Differentiate()
         {
             Divi newdivi = new();
@@ -514,9 +513,6 @@ namespace ExprTree
             return power;
         }
     }
-
-
-    /*
     abstract class Function : OPNode
     {
         public override void Add(INode node)
@@ -538,13 +534,63 @@ namespace ExprTree
     }
     class Sin : Function
     {
+        public override void SelfCheck()
+        {
+            // Empty
+        }
         public override void Differentiate()
         {
+            Multi multi = new();
+            Cos cos = new();
+
+            INode left = leftchild.Clone();
+            cos.Add(leftchild.Clone());
+            multi.SetChildren(left, cos);
+            left.Differentiate();
+            left.SelfCheck();
             
+
+            INode oldparent = GetParent();
+            oldparent.Remove(this);
+            oldparent.Add(multi);
+        }
+        public override INode Clone()
+        {
+            Sin sin = new();
+            sin.Add(leftchild.Clone());
+            return sin;
         }
     }
     class Cos : Function
     {
+        public override void SelfCheck()
+        {
+            // Empty
+        }
+        public override void Differentiate()
+        {
+            Multi multi1 = new();
+            Multi multi2 = new();
 
-    } */
+            Constant constant = new(-1);
+            multi1.SetChildren(constant, multi2);
+
+            Sin sin = new();
+            INode left = leftchild.Clone();
+            sin.Add(leftchild.Clone());
+            multi2.SetChildren(left, sin);
+            left.Differentiate();
+            left.SelfCheck();
+
+            INode oldparent = GetParent();
+            oldparent.Remove(this);
+            oldparent.Add(multi1);
+        }
+        public override INode Clone()
+        {
+            Cos cos = new();
+            cos.Add(leftchild.Clone());
+            return cos;
+        }
+    }
 }
