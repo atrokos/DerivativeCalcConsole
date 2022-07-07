@@ -55,12 +55,12 @@ namespace ExprTree
                 rightchild = null;
             }
         }
-        abstract public INode Clone();
-        public void SetChildren(INode first, INode second)
+        public virtual void SetChildren(INode first, INode second)
         {
             Add(first);
             Add(second);
         }
+        abstract public INode Clone();
         abstract public void Differentiate();
     }
     abstract class ConstNode : INode
@@ -92,24 +92,18 @@ namespace ExprTree
     }
     sealed class DiffVariable : ConstNode
     {
-        public DiffVariable(OPNode node)
-        {
-            if (node == null)
-                return;
-            node.Add(this);
-        }
         public override void SelfCheck()
         {
             return;
         }
         public override INode Clone()
         {
-            DiffVariable variable = new(parent);
+            DiffVariable variable = new();
             return variable;
         }
         public override void Differentiate()
         {
-            Constant one = new(1, GetParent());
+            Constant one = new(1);
             OPNode oldparent = GetParent();
 
             GetParent().Remove(this);
@@ -126,12 +120,9 @@ namespace ExprTree
             set { this.value = value; }
         }
 
-        public Constant(double value, OPNode node)
+        public Constant(double value)
         {
             this.value = value;
-            if (node == null)
-                return;
-            SetParent(parent);
         }
         public override void SelfCheck()
         {
@@ -143,17 +134,12 @@ namespace ExprTree
         }
         public override INode Clone()
         {
-            Constant constant = new(value, parent);
+            Constant constant = new(value);
             return constant;
         }
     }
     class Head : OPNode
     {
-        public Head()
-        {
-
-        }
-
         public override void Differentiate()
         {
             leftchild.Differentiate();
@@ -190,15 +176,11 @@ namespace ExprTree
     }
     sealed class Plus : OPNode
     {
-        public Plus(OPNode parent)
-        {
-            SetParent(parent);
-        }
         public override void SelfCheck()
         {
             if (leftchild is Constant left && rightchild is Constant right) //All constants
             {
-                Constant sum = new(left.Value + right.Value, null);
+                Constant sum = new(left.Value + right.Value);
 
                 INode oldparent = GetParent();
                 GetParent().Remove(this);
@@ -217,7 +199,6 @@ namespace ExprTree
                 oldparent.Add(leftchild);
             }
         }
-
         public override void Differentiate()
         {
             leftchild.Differentiate();
@@ -229,7 +210,7 @@ namespace ExprTree
         public override INode Clone()
         {
             /// <summary> This method returns a clone of the called node with a null parent. </summary>
-            Plus plus = new(null);
+            Plus plus = new();
             plus.Add(leftchild.Clone());
             plus.Add(rightchild.Clone());
             return plus;
@@ -237,21 +218,11 @@ namespace ExprTree
     }
     sealed class Minus : OPNode
     {
-        public Minus(OPNode parent)
-        {
-            SetParent(parent);
-        }
-        public Minus(OPNode parent, INode leftchild, INode rightchild)
-        {
-            this.parent = parent;
-            this.leftchild = leftchild;
-            this.rightchild = rightchild;
-        }
         public override void SelfCheck()
         {
             if (leftchild is Constant left && rightchild is Constant right) //All constants
             {
-                Constant sum = new(left.Value - right.Value, null);
+                Constant sum = new(left.Value - right.Value);
 
                 INode oldparent = GetParent();
                 GetParent().Remove(this);
@@ -259,8 +230,8 @@ namespace ExprTree
             }
             else if (leftchild is Constant left1 && left1.Value == 0) //Left is 0, so it multiplies by -1
             {
-                Multi multi = new(null);
-                Constant constant = new(-1, multi);
+                Multi multi = new();
+                Constant constant = new(-1);
                 multi.Add(rightchild);
 
                 INode oldparent = GetParent();
@@ -274,7 +245,6 @@ namespace ExprTree
                 oldparent.Add(leftchild);
             }
         }
-
         public override void Differentiate()
         {
             leftchild.Differentiate();
@@ -286,7 +256,7 @@ namespace ExprTree
         public override INode Clone()
         {
             /// <summary> This method returns a clone of the called node with a null parent. </summary>
-            Minus minus = new(null);
+            Minus minus = new();
             minus.Add(leftchild.Clone());
             minus.Add(rightchild.Clone());
             return minus;
@@ -294,16 +264,12 @@ namespace ExprTree
     }
     sealed class Multi : OPNode
     {
-        public Multi(OPNode parent)
-        {
-            SetParent(parent);
-        }
         public override void SelfCheck()
         {
             if (leftchild is Constant left && rightchild is Constant right) //All constants
             {
                 double prod = left.Value * right.Value;
-                Constant product = new(prod, null);
+                Constant product = new(prod);
 
                 INode oldparent = GetParent();
                 GetParent().Remove(this);
@@ -311,7 +277,7 @@ namespace ExprTree
             }
             else if (leftchild is Constant left1 && left1.Value == 0) //Left is 0
             {
-                Constant constant = new(0, null);
+                Constant constant = new(0);
 
                 INode oldparent = GetParent();
                 GetParent().Remove(this);
@@ -319,7 +285,7 @@ namespace ExprTree
             }
             else if (rightchild is Constant right1 && right1.Value == 0) //Right is 0
             {
-                Constant constant = new(0, null);
+                Constant constant = new(0);
 
                 INode oldparent = GetParent();
                 GetParent().Remove(this);
@@ -348,9 +314,9 @@ namespace ExprTree
         }
         public override void Differentiate()
         {
-            Plus plus = new(null);
-            Multi first = new(plus);
-            Multi second = new(plus);
+            Plus plus = new();
+            Multi first = new();
+            Multi second = new();
             plus.SetChildren(first, second);
 
             INode left1 = leftchild.Clone();
@@ -372,7 +338,7 @@ namespace ExprTree
         public override INode Clone()
         {
             /// <summary> This method returns a clone of the called node with a null parent. </summary>
-            Multi multi = new(null);
+            Multi multi = new();
             multi.Add(leftchild.Clone());
             multi.Add(rightchild.Clone());
             return multi;
@@ -380,16 +346,12 @@ namespace ExprTree
     }
     sealed class Divi : OPNode
     {
-        public Divi(OPNode parent)
-        {
-            SetParent(parent);
-        }
         public override void SelfCheck()
         {
             if (leftchild is Constant left && rightchild is Constant right) //All constants
             {
                 double prod = left.Value / right.Value;
-                Constant product = new(prod, null);
+                Constant product = new(prod);
 
                 INode oldparent = GetParent();
                 GetParent().Remove(this);
@@ -397,7 +359,7 @@ namespace ExprTree
             }
             else if (leftchild is Constant left1 && left1.Value == 0) //Left is 0
             {
-                Constant constant = new(0, null);
+                Constant constant = new(0);
 
                 INode oldparent = GetParent();
                 GetParent().Remove(this);
@@ -416,8 +378,8 @@ namespace ExprTree
             }
             else if (rightchild is Constant right3 && right3.Value == -1) //Right is -1
             {
-                Multi multi = new(null);
-                Constant constant = new(-1, multi);
+                Multi multi = new();
+                Constant constant = new(-1);
                 multi.Add(leftchild);
 
                 INode oldparent = GetParent();
@@ -429,19 +391,18 @@ namespace ExprTree
 
         public override void Differentiate()
         {
-            //TODO (URGENT) Add division differentiation
-            Divi newdivi = new(null);
+            Divi newdivi = new();
 
-            Minus minus = new(null);
-            Power power = new(null);
+            Minus minus = new();
+            Power power = new();
             newdivi.SetChildren(minus, power);
 
             INode PowerG = rightchild.Clone();
-            Constant constant = new(2, null);
+            Constant constant = new(2);
             power.SetChildren(PowerG, constant);
 
-            Multi left = new(null);
-            Multi right = new(null);
+            Multi left = new();
+            Multi right = new();
             minus.SetChildren(left, right);
 
             INode leftL = leftchild.Clone();
@@ -467,7 +428,7 @@ namespace ExprTree
         public override INode Clone()
         {
             /// <summary> This method returns a clone of the called node with a null parent. </summary>
-            Divi divi = new(null);
+            Divi divi = new();
             divi.Add(leftchild.Clone());
             divi.Add(rightchild.Clone());
             return divi;
@@ -475,16 +436,12 @@ namespace ExprTree
     }
     sealed class Power : OPNode
     {
-        public Power(OPNode parent)
-        {
-            SetParent(parent);
-        }
         public override void SelfCheck()
         {
             if (leftchild is Constant left && rightchild is Constant right) //All constants
             {
                 double prod = Math.Pow(left.Value, right.Value);
-                Constant product = new(prod, null);
+                Constant product = new(prod);
 
                 INode oldparent = GetParent();
                 GetParent().Remove(this);
@@ -492,7 +449,7 @@ namespace ExprTree
             }
             else if (leftchild is Constant left1 && left1.Value == 0) //Left is 0
             {
-                Constant constant = new(0, null);
+                Constant constant = new(0);
 
                 INode oldparent = GetParent();
                 GetParent().Remove(this);
@@ -500,7 +457,7 @@ namespace ExprTree
             }
             else if (rightchild is Constant right1 && right1.Value == 0) //Right is 0
             {
-                Constant constant = new(1, null);
+                Constant constant = new(1);
 
                 INode oldparent = GetParent();
                 GetParent().Remove(this);
@@ -518,15 +475,15 @@ namespace ExprTree
         {
             if (leftchild is DiffVariable x && rightchild is Constant m) //x^m
             {
-                if (parent is Multi multi)
+                if (parent is Multi multi && multi.leftchild is Constant)
                 {
                     multi.MultiplyBy(m.Value);
                     m.Value -= 1;
                 }
                 else
                 {
-                    Multi newmulti = new(null);
-                    Constant constant = new(m.Value, null);
+                    Multi newmulti = new();
+                    Constant constant = new(m.Value);
                     m.Value -= 1;
 
                     INode oldparent = GetParent();
@@ -551,10 +508,43 @@ namespace ExprTree
         public override INode Clone()
         {
             /// <summary> This method returns a clone of the called node with a null parent. </summary>
-            Power power = new(null);
+            Power power = new();
             power.Add(leftchild.Clone());
             power.Add(rightchild.Clone());
             return power;
         }
     }
+
+
+    /*
+    abstract class Function : OPNode
+    {
+        public override void Add(INode node)
+        {
+            if (leftchild == null)
+            {
+                leftchild = node;
+                leftchild.SetParent(this);
+            }
+        }
+        public override void Remove(INode node)
+        {
+            if (leftchild == node)
+            {
+                leftchild.SetParent(null);
+                leftchild = null;
+            }
+        }
+    }
+    class Sin : Function
+    {
+        public override void Differentiate()
+        {
+            
+        }
+    }
+    class Cos : Function
+    {
+
+    } */
 }
