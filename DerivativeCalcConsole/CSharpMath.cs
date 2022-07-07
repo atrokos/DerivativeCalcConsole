@@ -24,10 +24,6 @@ namespace CSharpMath
                 string[] simplified = newexpression.Simplify().ToString().Split(' ');
                 expr = parser.NewExprToList(newexpression.Simplify().ToString());
                 expr = parser.ToPrefix(expr);
-                for (int i = 0; i < expr.Count; i++)
-                {
-                    Console.Write(expr[i] + ", ");
-                }
             }
             public override string ToString()
             {
@@ -342,23 +338,23 @@ namespace CSharpMath
             {
                 INode node = null;
 
-                if (!operators.Contains(expr[pos]) && expr[pos] != VAR) //It is a number
+                if (!operators.Contains(expr[pos]) && expr[pos] != VAR && !functions.Contains(expr[pos])) //It is a number
                 {
                     double val = StringToDouble(expr[pos]);
-                    Constant constant = new(val, null);
+                    Constant constant = new(val);
                     node = constant;
                 }
                 else if (expr[pos] == VAR) //It is a derivative variable
                 {
-                    DiffVariable variable = new(null);
+                    DiffVariable variable = new();
                     node = variable;
                 }
-                else //It is an operator
+                else //It is an operator or a function
                 {
                     switch (expr[pos])
                     {
                         case "+":
-                            Plus plus = new(null);
+                            Plus plus = new();
                             pos++;
                             plus.Add(BuildTree(expr));
 
@@ -368,7 +364,7 @@ namespace CSharpMath
                             break;
 
                         case "-":
-                            Minus minus = new(null);
+                            Minus minus = new();
                             pos++;
                             minus.Add(BuildTree(expr));
 
@@ -378,7 +374,7 @@ namespace CSharpMath
                             break;
 
                         case "*":
-                            Multi multi = new(null);
+                            Multi multi = new();
                             pos++;
                             multi.Add(BuildTree(expr));
 
@@ -388,7 +384,7 @@ namespace CSharpMath
                             break;
 
                         case "/":
-                            Divi divi = new(null);
+                            Divi divi = new();
                             pos++;
                             divi.Add(BuildTree(expr));
 
@@ -398,7 +394,7 @@ namespace CSharpMath
                             break;
 
                         case "^":
-                            Power power = new(null);
+                            Power power = new();
                             pos++;
                             power.Add(BuildTree(expr));
 
