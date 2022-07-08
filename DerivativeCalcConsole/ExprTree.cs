@@ -2,6 +2,21 @@
 
 namespace ExprTree
 {
+    static class Debugger
+    {
+        public static void LightProblem(string message)
+        {
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine($"Warning: {message}");
+            Console.ForegroundColor = ConsoleColor.White;
+        }
+        public static void SevereProblem(string message)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine($"Warning: {message}");
+            Console.ForegroundColor = ConsoleColor.White;
+        }
+    }
     interface INode
     {
         void Differentiate();
@@ -35,12 +50,15 @@ namespace ExprTree
             {
                 leftchild = node;
                 leftchild.SetParent(this);
+                return;
             }
             else if (rightchild == null)
             {
                 rightchild = node;
                 rightchild.SetParent(this);
+                return;
             }
+            Debugger.SevereProblem($"{this} was requested to add {node}, but its children are full.");
         }
         public virtual void Remove(INode node)
         {
@@ -48,12 +66,16 @@ namespace ExprTree
             {
                 leftchild.SetParent(null);
                 leftchild = null;
+                return;
             }
             else if (rightchild == node)
             {
                 rightchild.SetParent(null);
                 rightchild = null;
+                return;
             }
+            Debugger.LightProblem($"Could not remove {node.GetHashCode()}, {this}'s ({this.GetHashCode()}) children are:\n\t\t{leftchild.GetHashCode()}, {rightchild.GetHashCode()}");
+            
         }
         public virtual void SetChildren(INode first, INode second)
         {
@@ -195,7 +217,7 @@ namespace ExprTree
             else if (rightchild is Constant right1 && right1.Value == 0) //Right is 0
             {
                 INode oldparent = GetParent();
-                GetParent().Remove(this);
+                oldparent.Remove(this);
                 oldparent.Add(leftchild);
             }
         }
@@ -205,7 +227,6 @@ namespace ExprTree
             leftchild.SelfCheck();
             rightchild.Differentiate();
             rightchild.SelfCheck();
-            SelfCheck();
         }
         public override INode Clone()
         {
@@ -251,7 +272,6 @@ namespace ExprTree
             leftchild.SelfCheck();
             rightchild.Differentiate();
             rightchild.SelfCheck();
-            SelfCheck();
         }
         public override INode Clone()
         {
@@ -548,7 +568,7 @@ namespace ExprTree
             multi.SetChildren(left, cos);
             left.Differentiate();
             left.SelfCheck();
-            
+
 
             INode oldparent = GetParent();
             oldparent.Remove(this);
