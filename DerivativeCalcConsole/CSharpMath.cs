@@ -6,44 +6,38 @@ using System.Globalization;
 
 namespace CSharpMath
 {
-    internal class Differentiation
+    namespace Differentiation
     {
         public class Expression
         {
             Head tree;
             Parser parser;
-            List<string> expr = new();
-            string VAR;
             string expr_string = null;
 
             public Expression(string newexpr, string vAR)
             {
-                Entity newexpression = newexpr;
-                VAR = vAR;
-                parser = new(VAR);
-                expr = parser.ExprToList(newexpression.Simplify().ToString());
-                expr = parser.ToPrefix(expr);
+                parser = new(vAR);
+                expr_string = newexpr;
+                tree = parser.PrefixToTree(parser.ToPrefix(parser.ExprToList(expr_string)));
             }
             public override string ToString()
             {
                 Entity sresult = expr_string;
                 return sresult.Simplify().ToString();
             }
-            public void Differentiate()
+            public void Differentiate() // Thought: Further derivations can be stored in a List, so List[0] is OG func., List[1] is 1st der. etc.
             {
-                tree = parser.PrefixToTree(expr);
                 tree.Differentiate();
-                expr = parser.TreeToPrefix(tree);
-                expr_string = parser.PrefixToInfix(expr);
+                expr_string = parser.PrefixToInfix(parser.TreeToPrefix(tree));
                 parser.ResetPos();
             }
         }
-        class Parser
+        internal class Parser
         {
-            static readonly HashSet<string> functions = new HashSet<string> { "sin", "cos", "tg", "cotg", "abs", "sqrt", "ln" };
-            static readonly HashSet<string> operators = new HashSet<string> { "+", "-", "*", "/", "^" };
-            string VAR;
-            int pos;
+            private static readonly HashSet<string> functions = new HashSet<string> { "sin", "cos", "tg", "cotg", "abs", "sqrt", "ln" };
+            private static readonly HashSet<string> operators = new HashSet<string> { "+", "-", "*", "/", "^" };
+            private readonly string VAR;
+            private int pos;
 
             public Parser(string vAR)
             {
@@ -106,7 +100,7 @@ namespace CSharpMath
                             i++;
 
                         } while (i < simplified.Length && simplified[i] != '(');
-                        
+
                         if (functions.Contains(func))
                         {
                             result.Add(func);
