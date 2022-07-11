@@ -14,10 +14,10 @@ namespace CSharpMath
             Parser parser;
             string expr_string = null;
 
-            public Expression(string newexpr, string vAR)
+            public Expression(string newexpr, string VAR)
             {
-                parser = new(vAR);
-                expr_string = newexpr;
+                parser = new(VAR);
+                expr_string = newexpr.ToLower();
                 tree = parser.PrefixToTree(parser.ToPrefix(parser.ExprToList(expr_string)));
             }
             public override string ToString()
@@ -36,6 +36,7 @@ namespace CSharpMath
         {
             private static readonly HashSet<string> functions = new HashSet<string> { "sin", "cos", "tg", "cotg", "abs", "sqrt", "ln" };
             private static readonly HashSet<string> operators = new HashSet<string> { "+", "-", "*", "/", "^" };
+            private static readonly HashSet<string> variables = new HashSet<string> { "e", "pi" };
             private readonly string VAR;
             private int pos;
 
@@ -98,6 +99,10 @@ namespace CSharpMath
                         {
                             func += simplified[i];
                             i++;
+                            if (variables.Contains(func))
+                            {
+                                break;
+                            }
 
                         } while (i < simplified.Length && simplified[i] != '(');
 
@@ -107,9 +112,9 @@ namespace CSharpMath
                             i++;
                             continue;
                         }
-                        else
+                        else if (variables.Contains(func))
                         {
-                            throw new Exception("PARSER ERROR: UNKNOWN FUNCTION: " + func);
+                            result.Add(func);
                         }
                     }
                 }
@@ -212,8 +217,15 @@ namespace CSharpMath
                     INode node = stack.Pop();
                     if (node is Constant constant)
                     {
-                        double val = constant.Value;
-                        result.Add(val.ToString(CultureInfo.InvariantCulture));
+                        if (constant.Value == Math.E)
+                            result.Add("e");
+                        else if (constant.Value == Math.PI)
+                            result.Add("pi");
+                        else
+                        {
+                            double val = constant.Value;
+                            result.Add(val.ToString(CultureInfo.InvariantCulture));
+                        }
                     }
                     else if (node is DiffVariable)
                     {
@@ -261,9 +273,14 @@ namespace CSharpMath
                             result.Add("cos");
                             stack.Push(opnode.leftchild);
                         }
+                        else if (node is Log)
+                        {
+                            result.Add("ln");
+                            stack.Push(opnode.leftchild);
+                        }
                         else
                         {
-                            throw new Exception("TreeToPrefix: UNKNOWN OPTOKEN");
+                            throw new Exception($"TreeToPrefix: UNKNOWN OPTOKEN: {node}");
                         }
                     }
                 }
@@ -301,9 +318,9 @@ namespace CSharpMath
 
             INode BuildTree(List<string> expr)
             {
-                INode node = null;
+                INode node;
 
-                if (!operators.Contains(expr[pos]) && expr[pos] != VAR && !functions.Contains(expr[pos])) //It is a number
+                if (!operators.Contains(expr[pos]) && expr[pos] != VAR && !functions.Contains(expr[pos]) && !variables.Contains(expr[pos])) //It is a number
                 {
                     double val = StringToDouble(expr[pos]);
                     Constant constant = new(val);
@@ -318,6 +335,14 @@ namespace CSharpMath
                 {
                     switch (expr[pos])
                     {
+                        case "e":
+                            Constant euler = new(Math.E);
+                            node = euler;
+                            break;
+                        case "pi":
+                            Constant pi = new(Math.PI);
+                            node = pi;
+                            break;
                         case "+":
                             Plus plus = new();
                             pos++;
@@ -378,6 +403,12 @@ namespace CSharpMath
                             pos++;
                             cos.Add(BuildTree(expr));
                             node = cos;
+                            break;
+                        case "ln":
+                            Log log = new();
+                            pos++;
+                            log.Add(BuildTree(expr));
+                            node = log;
                             break;
                         default:
                             throw new Exception("UNKNOWN OPTOKEN");
