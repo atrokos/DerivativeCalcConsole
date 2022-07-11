@@ -133,7 +133,7 @@ namespace ExprTree
         }
 
     }
-    sealed class Constant : ConstNode
+    class Constant : ConstNode
     {
         double value;
         public double Value
@@ -141,7 +141,10 @@ namespace ExprTree
             get { return value; }
             set { this.value = value; }
         }
+        public Constant()
+        {
 
+        }
         public Constant(double value)
         {
             this.value = value;
@@ -440,6 +443,7 @@ namespace ExprTree
             left.SelfCheck();
             right.SelfCheck();
             minus.SelfCheck();
+
             INode oldparent = GetParent();
             GetParent().Remove(this);
             oldparent.Add(newdivi);
@@ -488,41 +492,38 @@ namespace ExprTree
                 GetParent().Remove(this);
                 oldparent.Add(leftchild);
             }
+            else if (leftchild is Constant e && rightchild is Log log)
+            {
+                if (e.Value == Math.E)
+                {
+                    INode oldparent = GetParent();
+                    oldparent.Remove(this);
+                    oldparent.Add(log.leftchild.Clone());
+                }
+                
+            }
             //!!! ONLY for 1, because -1 wouldn't make a difference
         }
         public override void Differentiate()
         {
-            if (leftchild is DiffVariable x && rightchild is Constant m) //x^m
-            {
-                if (parent is Multi multi && multi.leftchild is Constant)
-                {
-                    multi.MultiplyBy(m.Value);
-                    m.Value -= 1;
-                }
-                else
-                {
-                    Multi newmulti = new();
-                    Constant constant = new(m.Value);
-                    m.Value -= 1;
+            Multi multi1 = new();
+            Multi multi2 = new();
 
-                    INode oldparent = GetParent();
-                    oldparent.Remove(this);
-                    newmulti.SetChildren(constant, this);
-                    oldparent.Add(newmulti);
-                }
-            }
-            else if (leftchild is Constant a && rightchild is DiffVariable x2) //a^x
-            {
-                //TODO Implement logarithm to finish this
-            }
-            else if (leftchild is DiffVariable x3 && rightchild is DiffVariable x4) //TODO x^x -> e^(x*ln(x))
-            {
+            INode power = this.Clone();
+            multi1.SetChildren(power, multi2);
+            power.SelfCheck();
 
-            }
-            else //TODO (maybe) Implement derivation of two constants = 0
-            {
+            Log log = new();
+            log.Add(leftchild.Clone());
+            INode right = rightchild.Clone();
+            multi2.SetChildren(log, right);
 
-            }
+            multi2.Differentiate();
+
+            INode oldparent = GetParent();
+            GetParent().Remove(this);
+            oldparent.Add(multi1);
+            multi1.SelfCheck();
         }
         public override INode Clone()
         {
@@ -535,6 +536,10 @@ namespace ExprTree
     }
     abstract class Function : OPNode
     {
+        public override void SelfCheck()
+        {
+            
+        }
         public override void Add(INode node)
         {
             if (leftchild == null)
@@ -554,10 +559,6 @@ namespace ExprTree
     }
     class Sin : Function
     {
-        public override void SelfCheck()
-        {
-            // Empty
-        }
         public override void Differentiate()
         {
             Multi multi = new();
@@ -583,10 +584,6 @@ namespace ExprTree
     }
     class Cos : Function
     {
-        public override void SelfCheck()
-        {
-            // Empty
-        }
         public override void Differentiate()
         {
             Multi multi1 = new();
@@ -611,6 +608,42 @@ namespace ExprTree
             Cos cos = new();
             cos.Add(leftchild.Clone());
             return cos;
+        }
+    }
+    class Log : Function // Only the natural log
+    {
+        public override void SelfCheck()
+        {
+            if (leftchild is Constant e && e.Value == Math.E)
+            {
+                Constant constant = new(1);
+
+                INode oldparent = GetParent();
+                oldparent.Remove(this);
+                oldparent.Add(constant);
+            }
+        }
+        public override void Differentiate()
+        {
+            Multi multi = new();
+            Divi divi = new();
+            Constant Dleft = new(1);
+            INode Dright = leftchild.Clone();
+            divi.SetChildren(Dleft, Dright);
+
+            INode Lright = leftchild.Clone();
+            multi.SetChildren(divi, Lright);
+            Lright.Differentiate();
+
+            INode oldparent = GetParent();
+            oldparent.Remove(this);
+            oldparent.Add(multi);
+        }
+        public override INode Clone()
+        {
+            Log newlog = new();
+            newlog.Add(leftchild.Clone());
+            return newlog;
         }
     }
 }
