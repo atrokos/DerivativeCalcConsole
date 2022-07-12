@@ -22,7 +22,6 @@ namespace CSharpMath
             }
             public override string ToString()
             {
-                Console.WriteLine(expr_string);
                 Entity sresult = expr_string;
                 return sresult.Simplify().ToString();
             }
@@ -33,7 +32,7 @@ namespace CSharpMath
                 parser.ResetPos();
             }
         }
-        internal class Parser
+        class Parser
         {
             private static readonly HashSet<string> functions = new HashSet<string> { "sin", "cos", "tg", "tan", "cotg", "cotan", "abs", "arcsin", "arccos", "arctg", "arccotg", "ln" };
             private static readonly HashSet<string> operators = new HashSet<string> { "+", "-", "*", "/", "^" };
@@ -45,7 +44,7 @@ namespace CSharpMath
             {
                 VAR = vAR;
             }
-
+            
             public void ResetPos() //IMPORTANT for further differentiations!!!
             {
                 pos = 0;
@@ -54,6 +53,7 @@ namespace CSharpMath
             {
                 List<string> result = new();
                 int i = 0;
+                bool operneeded = false;
                 while (i < simplified.Length)
                 {
                     string str_current = simplified[i].ToString();
@@ -64,6 +64,8 @@ namespace CSharpMath
                     }
                     if (char.IsDigit(simplified[i]))
                     {
+                        if (operneeded)
+                            result.Add("*");
                         string numb = "";
                         do
                         {
@@ -73,24 +75,37 @@ namespace CSharpMath
                         } while (i < simplified.Length && char.IsDigit(simplified[i]));
 
                         result.Add(numb);
+                        operneeded = true;
                         continue;
                     }
                     else if (operators.Contains(str_current))
                     {
                         result.Add(str_current);
                         i++;
+                        operneeded = false;
                         continue;
                     }
                     else if (str_current == VAR)
                     {
+                        if (operneeded)
+                            result.Add("*");
                         result.Add(str_current);
                         i++;
+                        operneeded = true;
                         continue;
                     }
-                    else if (simplified[i] == ')' || simplified[i] == '(')
+                    else if (simplified[i] == ')')
                     {
                         result.Add(str_current);
                         i++;
+                        operneeded = true;
+                        continue;
+                    }
+                    else if (simplified[i] == '(')
+                    {
+                        result.Add(str_current);
+                        i++;
+                        operneeded = false;
                         continue;
                     }
                     else
@@ -109,12 +124,18 @@ namespace CSharpMath
 
                         if (functions.Contains(func))
                         {
+                            if (operneeded)
+                                result.Add("*");
+                            operneeded = false;
                             result.Add(func);
                             i++;
                             continue;
                         }
                         else if (variables.Contains(func))
                         {
+                            if (operneeded)
+                                result.Add("*");
+                            operneeded = true;
                             result.Add(func);
                         }
                     }
