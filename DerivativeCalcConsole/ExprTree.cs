@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using AngouriMath;
-using CSharpMath.Differentiation;
 
 namespace ExprTree
 {
