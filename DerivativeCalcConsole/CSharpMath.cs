@@ -22,6 +22,7 @@ namespace CSharpMath
             }
             public override string ToString()
             {
+                Console.WriteLine(expr_string);
                 Entity sresult = expr_string;
                 return sresult.Simplify().ToString();
             }
@@ -34,7 +35,7 @@ namespace CSharpMath
         }
         internal class Parser
         {
-            private static readonly HashSet<string> functions = new HashSet<string> { "sin", "cos", "tg", "cotg", "abs", "sqrt", "ln" };
+            private static readonly HashSet<string> functions = new HashSet<string> { "sin", "cos", "tg", "tan", "cotg", "cotan", "abs", "arcsin", "arccos", "arctg", "arccotg", "ln" };
             private static readonly HashSet<string> operators = new HashSet<string> { "+", "-", "*", "/", "^" };
             private static readonly HashSet<string> variables = new HashSet<string> { "e", "pi" };
             private readonly string VAR;
@@ -273,6 +274,41 @@ namespace CSharpMath
                             result.Add("cos");
                             stack.Push(opnode.leftchild);
                         }
+                        else if (node is Tg)
+                        {
+                            result.Add("tan");
+                            stack.Push(opnode.leftchild);
+                        }
+                        else if (node is Cotg)
+                        {
+                            result.Add("cotan");
+                            stack.Push(opnode.leftchild);
+                        }
+                        else if (node is Arcsin)
+                        {
+                            result.Add("arcsin");
+                            stack.Push(opnode.leftchild);
+                        }
+                        else if (node is Arccos)
+                        {
+                            result.Add("arccos");
+                            stack.Push(opnode.leftchild);
+                        }
+                        else if (node is Arctg)
+                        {
+                            result.Add("arctan");
+                            stack.Push(opnode.leftchild);
+                        }
+                        else if (node is Arccotg)
+                        {
+                            result.Add("arccotan");
+                            stack.Push(opnode.leftchild);
+                        }
+                        else if (node is Abs)
+                        {
+                            result.Add("abs");
+                            stack.Push(opnode.leftchild);
+                        }
                         else if (node is Log)
                         {
                             result.Add("ln");
@@ -352,7 +388,6 @@ namespace CSharpMath
                             plus.Add(BuildTree(expr));
                             node = plus;
                             break;
-
                         case "-":
                             Minus minus = new();
                             pos++;
@@ -362,7 +397,6 @@ namespace CSharpMath
                             minus.Add(BuildTree(expr));
                             node = minus;
                             break;
-
                         case "*":
                             Multi multi = new();
                             pos++;
@@ -372,7 +406,6 @@ namespace CSharpMath
                             multi.Add(BuildTree(expr));
                             node = multi;
                             break;
-
                         case "/":
                             Divi divi = new();
                             pos++;
@@ -382,7 +415,6 @@ namespace CSharpMath
                             divi.Add(BuildTree(expr));
                             node = divi;
                             break;
-
                         case "^":
                             Power power = new();
                             pos++;
@@ -403,6 +435,50 @@ namespace CSharpMath
                             pos++;
                             cos.Add(BuildTree(expr));
                             node = cos;
+                            break;
+                        case "tan":
+                        case "tg":
+                            Tg tg = new();
+                            pos++;
+                            tg.Add(BuildTree(expr));
+                            node = tg;
+                            break;
+                        case "cotan":
+                        case "cotg":
+                            Cotg cotg = new();
+                            pos++;
+                            cotg.Add(BuildTree(expr));
+                            node = cotg;
+                            break;
+                        case "arcsin":
+                            Arcsin arcsin = new();
+                            pos++;
+                            arcsin.Add(BuildTree(expr));
+                            node = arcsin;
+                            break;
+                        case "arccos":
+                            Arccos arccos = new();
+                            pos++;
+                            arccos.Add(BuildTree(expr));
+                            node = arccos;
+                            break;
+                        case "arctg":
+                            Arctg arctg = new();
+                            pos++;
+                            arctg.Add(BuildTree(expr));
+                            node = arctg;
+                            break;
+                        case "arccotg":
+                            Arccotg arccotg = new();
+                            pos++;
+                            arccotg.Add(BuildTree(expr));
+                            node = arccotg;
+                            break;
+                        case "abs":
+                            Abs abs = new();
+                            pos++;
+                            abs.Add(BuildTree(expr));
+                            node = abs;
                             break;
                         case "ln":
                             Log log = new();

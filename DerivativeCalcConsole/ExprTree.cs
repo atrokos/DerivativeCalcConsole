@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
+using AngouriMath;
+using CSharpMath.Differentiation;
 
 namespace ExprTree
 {
@@ -371,16 +374,7 @@ namespace ExprTree
     {
         public override void SelfCheck()
         {
-            if (leftchild is Constant left && rightchild is Constant right) //All constants
-            {
-                double prod = left.Value / right.Value;
-                Constant product = new(prod);
-
-                INode oldparent = GetParent();
-                GetParent().Remove(this);
-                oldparent.Add(product);
-            }
-            else if (leftchild is Constant left1 && left1.Value == 0) //Left is 0
+            if (leftchild is Constant left1 && left1.Value == 0) //Left is 0
             {
                 Constant constant = new(0);
 
@@ -610,6 +604,208 @@ namespace ExprTree
             return cos;
         }
     }
+    class Tg : Function
+    {
+        public override void Differentiate()
+        {
+            Multi multi = new();
+            Divi divi = new();
+            multi.SetChildren(divi, leftchild.Clone());
+            multi.rightchild.Differentiate();
+
+            Constant one = new(1);
+            Constant two = new(2);
+            Power power = new();
+            Cos cos = new();
+            cos.Add(leftchild.Clone());
+
+            divi.SetChildren(one, power);
+            power.SetChildren(cos, two);
+
+            INode oldparent = GetParent();
+            oldparent.Remove(this);
+            oldparent.Add(multi);
+        }
+        public override INode Clone()
+        {
+            Tg tg = new();
+            tg.Add(leftchild.Clone());
+
+            return tg;
+        }
+    }
+    class Cotg : Function
+    {
+        public override void Differentiate()
+        {
+            Multi multi1 = new();
+            Constant minus = new(-1);
+            Multi multi2 = new();
+
+            multi1.SetChildren(minus, multi2);
+            Divi divi = new();
+            multi2.SetChildren(divi, leftchild.Clone());
+            multi2.rightchild.Differentiate();
+
+            Constant one = new(1);
+            Constant two = new(2);
+            Power power = new();
+            Sin sin = new();
+            sin.Add(leftchild.Clone());
+
+            divi.SetChildren(one, power);
+            power.SetChildren(sin, two);
+
+            INode oldparent = GetParent();
+            oldparent.Remove(this);
+            oldparent.Add(multi1);
+        }
+        public override INode Clone()
+        {
+            Cotg cotg = new();
+            cotg.Add(leftchild.Clone());
+
+            return cotg;
+        }
+    }
+    class Arcsin : Function
+    {
+        public override void Differentiate()
+        {
+            Multi multi = new();
+            Divi divi1 = new();
+            multi.SetChildren(divi1, leftchild.Clone());
+            multi.rightchild.Differentiate();
+
+            Constant one = new(1);
+            Power power1 = new();
+
+            divi1.SetChildren(one.Clone(), power1);
+
+            Minus minus = new();
+            Constant two = new(2);
+            Power power2 = new();
+            minus.SetChildren(one.Clone(), power2);
+            power2.SetChildren(leftchild.Clone(), two.Clone());
+
+            Divi divi2 = new();
+            power1.SetChildren(minus, divi2);
+            divi2.SetChildren(one.Clone(), two.Clone());
+
+            INode oldparent = GetParent();
+            oldparent.Remove(this);
+            oldparent.Add(multi);
+        }
+        public override INode Clone()
+        {
+            Arcsin arcsin = new();
+            arcsin.Add(leftchild.Clone());
+            return arcsin;
+        }
+    }
+    class Arccos : Function
+    {
+        public override void Differentiate()
+        {
+            Multi multi1 = new();
+            Constant minusone = new(-1);
+            Multi multi = new();
+            Divi divi1 = new();
+            multi1.SetChildren(minusone, multi);
+            multi.SetChildren(divi1, leftchild.Clone());
+            multi.rightchild.Differentiate();
+
+            Constant one = new(1);
+            Power power1 = new();
+
+            divi1.SetChildren(one.Clone(), power1);
+
+            Minus minus = new();
+            Constant two = new(2);
+            Power power2 = new();
+            minus.SetChildren(one.Clone(), power2);
+            power2.SetChildren(leftchild.Clone(), two.Clone());
+
+            Divi divi2 = new();
+            power1.SetChildren(minus, divi2);
+            divi2.SetChildren(one.Clone(), two.Clone());
+
+            INode oldparent = GetParent();
+            oldparent.Remove(this);
+            oldparent.Add(multi1);
+        }
+        public override INode Clone()
+        {
+            Arccos arccos = new();
+            arccos.Add(leftchild.Clone());
+            return arccos;
+        }
+    }
+    class Arctg : Function
+    {
+        public override void Differentiate()
+        {
+            Multi multi = new();
+            Divi divi = new();
+            multi.SetChildren(divi, leftchild.Clone());
+            multi.rightchild.Differentiate();
+
+            Constant one = new(1);
+            Constant two = new(2);
+            Plus plus = new();
+
+            divi.SetChildren(one.Clone(), plus);
+
+            Power power = new();
+            plus.SetChildren(one.Clone(), power);
+            power.SetChildren(leftchild.Clone(), two);
+
+
+            INode oldparent = GetParent();
+            oldparent.Remove(this);
+            oldparent.Add(multi);
+        }
+        public override INode Clone()
+        {
+            Arctg arctg = new();
+            arctg.Add(leftchild.Clone());
+            return arctg;
+        }
+    }
+    class Arccotg : Function
+    {
+        public override void Differentiate()
+        {
+            Multi multi1 = new();
+            Constant minusone = new(-1);
+            Multi multi = new();
+            multi1.SetChildren(minusone, multi);
+            Divi divi = new();
+            multi.SetChildren(divi, leftchild.Clone());
+            multi.rightchild.Differentiate();
+
+            Constant one = new(1);
+            Constant two = new(2);
+            Plus plus = new();
+
+            divi.SetChildren(one.Clone(), plus);
+
+            Power power = new();
+            plus.SetChildren(one.Clone(), power);
+            power.SetChildren(leftchild.Clone(), two);
+
+
+            INode oldparent = GetParent();
+            oldparent.Remove(this);
+            oldparent.Add(multi1);
+        }
+        public override INode Clone()
+        {
+            Arccotg arccotg = new();
+            arccotg.Add(leftchild.Clone());
+            return arccotg;
+        }
+    }
     class Log : Function // Only the natural log
     {
         public override void SelfCheck()
@@ -646,4 +842,26 @@ namespace ExprTree
             return newlog;
         }
     }
+    class Abs : Function
+    {
+        public override void Differentiate()
+        {
+            Divi divi = new();
+            Abs abs = new();
+            abs.Add(leftchild.Clone());
+            divi.SetChildren(leftchild.Clone(), abs);
+
+            INode oldparent = GetParent();
+            oldparent.Remove(this);
+            oldparent.Add(divi);
+        }
+        public override INode Clone()
+        {
+            Abs abs = new();
+            abs.Add(leftchild.Clone());
+
+            return abs;
+        }
+    }
+
 }
