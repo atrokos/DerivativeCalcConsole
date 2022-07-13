@@ -10,15 +10,21 @@ namespace CSharpMath
     {
         public class Expression
         {
-            Head tree;
-            Parser parser;
-            string expr_string = null;
+            private Head tree;
+            private readonly Parser parser;
+            private string expr_string;
 
             public Expression(string newexpr, string VAR)
             {
                 parser = new(VAR);
+
+                if (newexpr == "")
+                {
+                    Console.WriteLine("Error: Input expression cannot be empty!");
+                    return;
+                }
                 expr_string = newexpr.ToLower();
-                tree = parser.PrefixToTree(parser.ToPrefix(parser.ExprToList(expr_string)));
+                tree = parser.ConvertToTree(expr_string);
             }
             public override string ToString()
             {
@@ -28,8 +34,7 @@ namespace CSharpMath
             public void Differentiate() // Thought: Further derivations can be stored in a List, so List[0] is OG func., List[1] is 1st der. etc.
             {
                 tree.Differentiate();
-                expr_string = parser.PrefixToInfix(parser.TreeToPrefix(tree));
-                parser.ResetPos();
+                expr_string = parser.ConvertToInfix(tree);
             }
         }
         class Parser
@@ -44,16 +49,23 @@ namespace CSharpMath
             {
                 VAR = vAR;
             }
-            
-            public void ResetPos() //IMPORTANT for further differentiations!!!
+            public Head ConvertToTree(string expression)
             {
-                pos = 0;
+                Head tree = PrefixToTree(ListToPrefix(ExprToList(expression)));
+                return tree;
             }
-            public List<string> ExprToList(string simplified)
+            public string ConvertToInfix(Head tree)
+            {
+                string expression = PrefixToInfix(TreeToPrefix(tree));
+                pos = 0;
+                return expression;
+            }
+
+            List<string> ExprToList(string simplified)
             {
                 List<string> result = new();
                 int i = 0;
-                bool operneeded = false;
+                bool oper_needed = false;
                 while (i < simplified.Length)
                 {
                     string str_current = simplified[i].ToString();
@@ -64,7 +76,7 @@ namespace CSharpMath
                     }
                     if (char.IsDigit(simplified[i]))
                     {
-                        if (operneeded)
+                        if (oper_needed)
                             result.Add("*");
                         string numb = "";
                         do
@@ -75,37 +87,39 @@ namespace CSharpMath
                         } while (i < simplified.Length && char.IsDigit(simplified[i]));
 
                         result.Add(numb);
-                        operneeded = true;
+                        oper_needed = true;
                         continue;
                     }
                     else if (operators.Contains(str_current))
                     {
                         result.Add(str_current);
                         i++;
-                        operneeded = false;
+                        oper_needed = false;
                         continue;
                     }
                     else if (str_current == VAR)
                     {
-                        if (operneeded)
+                        if (oper_needed)
                             result.Add("*");
                         result.Add(str_current);
                         i++;
-                        operneeded = true;
+                        oper_needed = true;
                         continue;
                     }
                     else if (simplified[i] == ')')
                     {
                         result.Add(str_current);
                         i++;
-                        operneeded = true;
+                        oper_needed = true;
                         continue;
                     }
                     else if (simplified[i] == '(')
                     {
+                        if (oper_needed)
+                            result.Add("*");
                         result.Add(str_current);
                         i++;
-                        operneeded = false;
+                        oper_needed = false;
                         continue;
                     }
                     else
@@ -124,27 +138,27 @@ namespace CSharpMath
 
                         if (functions.Contains(func))
                         {
-                            if (operneeded)
+                            if (oper_needed)
                                 result.Add("*");
-                            operneeded = false;
+                            oper_needed = false;
                             result.Add(func);
                             i++;
                             continue;
                         }
                         else if (variables.Contains(func))
                         {
-                            if (operneeded)
+                            if (oper_needed)
                                 result.Add("*");
-                            operneeded = true;
+                            oper_needed = true;
                             result.Add(func);
                         }
                     }
                 }
                 return result;
             }
-            public List<string> ToPrefix(List<string> expr)
+            List<string> ListToPrefix(List<string> expr)
             {
-                List<string> prefix = new();
+                List<string> result = new();
                 Stack<string> operatorstack = new();
                 for (int i = expr.Count - 1; i >= 0; i--)
                 {
@@ -161,26 +175,23 @@ namespace CSharpMath
                             {
                                 do
                                 {
-                                    prefix.Add(operatorstack.Pop());
+                                    result.Add(operatorstack.Pop());
                                 }
                                 while (operatorstack.Count > 0 && GetPriority(current) < GetPriority(operatorstack.Peek()));
                                 operatorstack.Push(current);
                             }
+                            else if (operatorstack.Peek() == "^")
+                            {
+                                do
+                                {
+                                    result.Add(operatorstack.Pop());
+                                }
+                                while (operatorstack.Count > 0 && GetPriority(current) <= GetPriority(operatorstack.Peek()) && operatorstack.Peek() != "^");
+                                operatorstack.Push(current);
+                            }
                             else
                             {
-                                if (operatorstack.Peek() == "^")
-                                {
-                                    do
-                                    {
-                                        prefix.Add(operatorstack.Pop());
-                                    }
-                                    while (operatorstack.Count > 0 && GetPriority(current) <= GetPriority(operatorstack.Peek()) && operatorstack.Peek() != "^");
-                                    operatorstack.Push(current);
-                                }
-                                else
-                                {
-                                    operatorstack.Push(current);
-                                }
+                                operatorstack.Push(current);
                             }
                         }
                         else
@@ -192,10 +203,10 @@ namespace CSharpMath
                     {
                         while (operatorstack.Peek() != ")")
                         {
-                            prefix.Add(operatorstack.Pop());
+                            result.Add(operatorstack.Pop());
                         }
                         operatorstack.Pop();
-                        prefix.Add(current);
+                        result.Add(current);
                     }
                     else if (current == ")")
                     {
@@ -205,29 +216,31 @@ namespace CSharpMath
                     {
                         while (operatorstack.Peek() != ")")
                         {
-                            prefix.Add(operatorstack.Pop());
+                            result.Add(operatorstack.Pop());
                         }
                         operatorstack.Pop();
                     }
                     else
                     {
-                        prefix.Add(current);
+                        result.Add(current);
                     }
                 }
+
                 while (operatorstack.Count != 0)
                 {
-                    prefix.Add(operatorstack.Pop());
+                    result.Add(operatorstack.Pop());
                 }
-                prefix.Reverse();
-                return prefix;
+
+                result.Reverse();
+                return result;
             }
-            public Head PrefixToTree(List<string> expr)
+            Head PrefixToTree(List<string> expr)
             {
                 Head node = new();
                 node.Add(BuildTree(expr));
                 return node;
             }
-            public List<string> TreeToPrefix(Head tree)
+            List<string> TreeToPrefix(Head tree)
             {
                 Stack<INode> stack = new();
                 List<string> result = new();
@@ -343,7 +356,7 @@ namespace CSharpMath
                 }
                 return result;
             }
-            public string PrefixToInfix(List<string> expr)
+            string PrefixToInfix(List<string> expr)
             {
                 Stack<string> stack = new();
 
@@ -372,7 +385,6 @@ namespace CSharpMath
                 }
                 return stack.Pop();
             }
-
             INode BuildTree(List<string> expr)
             {
                 INode node;
