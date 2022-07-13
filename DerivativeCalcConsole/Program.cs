@@ -1,5 +1,5 @@
 ﻿using System;
-using static CSharpMath.Differentiation;
+using CSharpMath.Differentiation;
 
 namespace DerivativeCalc
 {
@@ -7,7 +7,7 @@ namespace DerivativeCalc
     {
         static void Main(string[] args)
         {
-            Expression vzorec = new("sin(x)", "x");
+            Expression vzorec = new("abs(x)", "x");
             vzorec.Differentiate();
             Console.WriteLine(vzorec);
         }

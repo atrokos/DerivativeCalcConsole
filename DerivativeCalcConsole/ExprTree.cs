@@ -98,7 +98,7 @@ namespace ExprTree
             Add(second);
         }
     }
-    class Head : OPNode
+    class Head : OPNode, IParent, INode
     {
         public override void Add(INode node)
         {
