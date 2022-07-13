@@ -22,8 +22,8 @@ namespace CSharpMath
             }
             public override string ToString()
             {
-                Entity sresult = expr_string;
-                return sresult.Simplify().ToString();
+                Entity result = expr_string[1..^1];
+                return result.Latexise();
             }
             public void Differentiate() // Thought: Further derivations can be stored in a List, so List[0] is OG func., List[1] is 1st der. etc.
             {
@@ -369,7 +369,7 @@ namespace CSharpMath
                     {
                         string op1 = stack.Pop();
 
-                        string temp = "(" + curr + "(" + op1 + ")" + ")";
+                        string temp = curr + "(" + op1 + ")";
                         stack.Push(temp);
                     }
                     else
