@@ -17,12 +17,6 @@ namespace CSharpMath
             public Expression(string newexpr, string VAR)
             {
                 parser = new(VAR);
-
-                if (newexpr == "")
-                {
-                    Console.WriteLine("Error: Input expression cannot be empty!");
-                    return;
-                }
                 expr_string = newexpr.ToLower();
                 tree = parser.ConvertToTree(expr_string);
             }
