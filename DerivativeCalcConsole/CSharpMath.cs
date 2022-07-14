@@ -13,22 +13,35 @@ namespace CSharpMath
             private Head tree;
             private readonly Parser parser;
             private string expr_string;
+            private bool isDifferentiable;
 
             public MathExpression(string newexpr, string VAR)
             {
                 parser = new(VAR);
                 expr_string = newexpr.ToLower();
-                tree = parser.ConvertToTree(expr_string);
+                try
+                {
+                    tree = parser.ConvertToTree(expr_string);
+                    isDifferentiable = true;
+                }
+                catch
+                {
+                    isDifferentiable = false;
+                }
             }
             public override string ToString()
             {
-                Entity result = expr_string[1..^1];
+                Entity result = expr_string;
                 return result.Latexise();
             }
             public void Differentiate() // Thought: Further derivations can be stored in a List, so List[0] is OG func., List[1] is 1st der. etc.
             {
                 tree.Differentiate();
                 expr_string = parser.ConvertToInfix(tree);
+            }
+            public bool IsDifferentiable()
+            {
+                return isDifferentiable;
             }
         }
         class Parser
