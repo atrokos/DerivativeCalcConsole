@@ -8,13 +8,13 @@ namespace CSharpMath
 {
     namespace Differentiation
     {
-        public class Expression
+        public class MathExpression
         {
             private Head tree;
             private readonly Parser parser;
             private string expr_string;
 
-            public Expression(string newexpr, string VAR)
+            public MathExpression(string newexpr, string VAR)
             {
                 parser = new(VAR);
                 expr_string = newexpr.ToLower();

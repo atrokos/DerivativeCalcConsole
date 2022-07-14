@@ -2,21 +2,6 @@
 
 namespace ExprTree
 {
-    static class Debugger
-    {
-        public static void LightProblem(string message)
-        {
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine($"Warning: {message}");
-            Console.ForegroundColor = ConsoleColor.White;
-        }
-        public static void SevereProblem(string message)
-        {
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine($"Warning: {message}");
-            Console.ForegroundColor = ConsoleColor.White;
-        }
-    }
     interface IParent
     {
         /// <summary>
@@ -73,7 +58,6 @@ namespace ExprTree
                 rightchild.SetParent(this);
                 return;
             }
-            Debugger.SevereProblem($"{this} was requested to add {node}, but its children are full.");
         }
         public virtual void Remove(INode node)
         {
@@ -89,7 +73,6 @@ namespace ExprTree
                 rightchild = null;
                 return;
             }
-            Debugger.LightProblem($"Could not remove {node.GetHashCode()}, {this}'s ({this.GetHashCode()}) children are:\n\t\t{leftchild.GetHashCode()}, {rightchild.GetHashCode()}");
             
         }
         public virtual void SetChildren(INode first, INode second)
