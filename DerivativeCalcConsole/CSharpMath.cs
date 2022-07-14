@@ -46,7 +46,7 @@ namespace CSharpMath
         }
         class Parser
         {
-            private static readonly HashSet<string> functions = new HashSet<string> { "sin", "cos", "tg", "tan", "cotg", "cotan", "abs", "arcsin", "arccos", "arctg", "arccotg", "ln" };
+            private static readonly HashSet<string> functions = new HashSet<string> { "sin", "cos", "tg", "tan", "cotg", "cotan", "abs", "arcsin", "arccos", "arctg", "arccotg", "ln", "sqrt" };
             private static readonly HashSet<string> operators = new HashSet<string> { "+", "-", "*", "/", "^" };
             private static readonly HashSet<string> variables = new HashSet<string> { "e", "pi" };
             private readonly string VAR;
@@ -525,6 +525,18 @@ namespace CSharpMath
                             pos++;
                             log.Add(BuildTree(expr));
                             node = log;
+                            break;
+                        case "sqrt":
+                            Power power1 = new();
+                            pos++;
+                            power1.Add(BuildTree(expr));
+
+                            Divi sqrtdivi = new();
+                            Constant one = new(1), two = new(2);
+                            sqrtdivi.SetChildren(one, two);
+                            power1.Add(sqrtdivi);
+
+                            node = power1;
                             break;
                         default:
                             throw new Exception("UNKNOWN OPTOKEN");
