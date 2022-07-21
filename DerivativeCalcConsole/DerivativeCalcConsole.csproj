@@ -9,4 +9,19 @@
     <PackageReference Include="AngouriMath" Version="1.4.0-preview.3" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Update="Rules.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Rules.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Rules.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Rules.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+
 </Project>
