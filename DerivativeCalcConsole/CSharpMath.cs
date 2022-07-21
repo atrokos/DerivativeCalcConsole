@@ -184,7 +184,9 @@ namespace CSharpMath
                                 result.Add("*");
                             oper_needed = true;
                             result.Add(func);
+                            continue;
                         }
+                        throw new Exception("Unknown Token: Unknown Function or Variable");
                     }
                 }
                 return result;
