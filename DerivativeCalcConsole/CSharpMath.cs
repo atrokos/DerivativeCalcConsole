@@ -12,6 +12,7 @@ namespace CSharpMath
         {
             private Head tree;
             private readonly Parser parser;
+            private StepGenerator generator = new();
             private string expr_string;
             private bool isDifferentiable;
 
@@ -43,6 +44,15 @@ namespace CSharpMath
             {
                 tree.Differentiate();
                 expr_string = parser.ConvertToInfix(tree);
+            }
+            public void DifferentiateSteps() // Thought: Further derivations can be stored in a List, so List[0] is OG func., List[1] is 1st der. etc.
+            {
+                tree.DifferentiateSteps();
+                expr_string = parser.ConvertToInfix(tree);
+                Console.WriteLine();
+                generator.Generate(0);
+                Console.WriteLine();
+                Console.WriteLine("Výsledek je:");
             }
             public bool IsDifferentiable()
             {
@@ -601,19 +611,49 @@ namespace CSharpMath
 
         public class StepGenerator
         {
+            private int pos = 0;
             private Parser parser = new("x");
-            private static readonly Dictionary<string, string> descriptions = new() { { "+", "Plus se derivuje jednoduše: zderivujeme levou i pravou stranu, přičemž sčítání ponecháme." } };
-            public string Generate()
+            public void Generate(int position)
             {
-                foreach (List<INode> nodes in Storage.Steps)
-                {
-                    Console.WriteLine(parser.ConvertToInfixHead(nodes[0]) + " se zderivuje na:");
-                    switch (nodes[0])
-                    {
-                        case Plus:
+                Console.WriteLine();
+                if (position >= Storage.Steps.Count)
+                    return;
 
-                            break;
-                    }
+                List<string> nodes = new();
+                foreach (INode node in Storage.Steps[position])
+                {
+                    nodes.Add(parser.ConvertToInfixHead(node));
+                }
+
+                Console.WriteLine(nodes[0]);
+                switch (Storage.Steps[position][0])
+                {
+                    case Plus:
+                        Console.WriteLine("Pro sčítání platí: f + g = f' + g', tj.:");
+                        Console.WriteLine($"[{nodes[1]}]' + [{nodes[2]}]', což je:");
+                        Generate(position + 1 + pos);
+                        Generate(position + 2 + pos);
+                        Console.WriteLine($"Po úpravě:");
+                        Console.WriteLine($"{nodes[3]} + {nodes[4]}");
+                        Console.WriteLine("-----");
+                        break;
+                    case Minus:
+                        Console.WriteLine("Pro odčítání platí: f - g = f' - g', tj.:");
+                        Console.WriteLine($"[{nodes[1]}]' - [{nodes[2]}]', což je:");
+                        Generate(position + 1 + pos);
+                        Generate(position + 2 + pos);
+                        Console.WriteLine($"Po úpravě:");
+                        Console.WriteLine($"{nodes[3]} - {nodes[4]}");
+                        Console.WriteLine("-----");
+                        break;
+                    case Constant:
+                        Console.WriteLine($"{nodes[0]} je konstanta, zderivuje se tedy na 0.");
+                        pos = position;
+                        break;
+                    case DiffVariable:
+                        Console.WriteLine($"{nodes[0]} je derivační proměnná, zderivuje se tedy na 1.");
+                        pos = position;
+                        break;
                 }
             }
         }

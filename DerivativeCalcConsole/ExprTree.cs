@@ -1,7 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
+using CSharpMath.Differentiation;
 
 namespace ExprTree
 {
+    public static class Storage
+    {
+        public static List<List<INode>> Steps = new();
+    }
     interface IParent
     {
         /// <summary>
@@ -11,21 +17,23 @@ namespace ExprTree
         void Remove(INode node);
         void SwapChildren(INode newchild); // child -> P  newchild   ==> child  P <- newchild
     }
-    interface INode
+    public interface INode
     {
         void SetParent(OPNode node);
         void SelfCheck();
         void Differentiate();
+        void DifferentiateSteps();
         INode Clone();
     }
 
-    abstract class OPNode : INode, IParent
+    public abstract class OPNode : INode, IParent
     {
         public INode leftchild, rightchild;
         private OPNode parent = null;
 
         abstract public void SelfCheck();
         abstract public void Differentiate();
+        abstract public void DifferentiateSteps();
         abstract public INode Clone();
 
         public OPNode GetParent()
@@ -108,6 +116,10 @@ namespace ExprTree
         {
             leftchild.Differentiate();
         }
+        public override void DifferentiateSteps()
+        {
+            leftchild.DifferentiateSteps();
+        }
         public override INode Clone()
         {
             /// <summary> This method returns a clone of the called node with a null parent. </summary>
@@ -132,6 +144,7 @@ namespace ExprTree
         }
         abstract public void SelfCheck();
         abstract public void Differentiate();
+        abstract public void DifferentiateSteps();
         abstract public INode Clone();
     }
     sealed class DiffVariable : ConstNode
@@ -140,11 +153,6 @@ namespace ExprTree
         {
             return;
         }
-        public override INode Clone()
-        {
-            DiffVariable variable = new();
-            return variable;
-        }
         public override void Differentiate()
         {
             Constant one = new(1);
@@ -152,6 +160,22 @@ namespace ExprTree
 
             GetParent().Remove(this);
             oldparent.Add(one);
+        }
+        public override void DifferentiateSteps()
+        {
+            List<INode> list = new() { this.Clone() };
+            Storage.Steps.Add(list);
+
+            Constant one = new(1);
+            OPNode oldparent = GetParent();
+
+            GetParent().Remove(this);
+            oldparent.Add(one);
+        }
+        public override INode Clone()
+        {
+            DiffVariable variable = new();
+            return variable;
         }
 
     }
@@ -173,6 +197,13 @@ namespace ExprTree
         }
         public override void Differentiate()
         {
+            Value = 0;
+        }
+        public override void DifferentiateSteps()
+        {
+            List<INode> list = new() { this.Clone() };
+            Storage.Steps.Add(list);
+
             Value = 0;
         }
         public override INode Clone()
@@ -206,6 +237,15 @@ namespace ExprTree
             leftchild.SelfCheck();
             rightchild.Differentiate();
             rightchild.SelfCheck();
+        }
+        public override void DifferentiateSteps()
+        {
+            List<INode> list = new() { this.Clone(), leftchild.Clone(), rightchild.Clone() };
+            Storage.Steps.Add(list);
+            leftchild.DifferentiateSteps();
+            rightchild.DifferentiateSteps();
+            list.Add(leftchild.Clone());
+            list.Add(rightchild.Clone());
         }
         public override INode Clone()
         {
@@ -244,6 +284,15 @@ namespace ExprTree
             leftchild.SelfCheck();
             rightchild.Differentiate();
             rightchild.SelfCheck();
+        }
+        public override void DifferentiateSteps()
+        {
+            List<INode> list = new() { this.Clone(), leftchild.Clone(), rightchild.Clone() };
+            Storage.Steps.Add(list);
+            leftchild.DifferentiateSteps();
+            rightchild.DifferentiateSteps();
+            list.Add(leftchild.Clone());
+            list.Add(rightchild.Clone());
         }
         public override INode Clone()
         {
@@ -296,6 +345,7 @@ namespace ExprTree
         }
         public override void Differentiate()
         {
+
             Plus plus = new();
             Multi first = new();
             Multi second = new();
@@ -310,6 +360,28 @@ namespace ExprTree
 
             second.SetChildren(leftchild, rightchild);
             second.rightchild.Differentiate();
+            second.SelfCheck();
+
+            SwapChildren(plus);
+            plus.SelfCheck();
+        }
+        public override void DifferentiateSteps()
+        {
+
+            Plus plus = new();
+            Multi first = new();
+            Multi second = new();
+            plus.SetChildren(first, second);
+
+            INode left1 = leftchild.Clone();
+            INode right1 = rightchild.Clone();
+
+            first.SetChildren(left1, right1);
+            first.leftchild.DifferentiateSteps();
+            first.SelfCheck();
+
+            second.SetChildren(leftchild, rightchild);
+            second.rightchild.DifferentiateSteps();
             second.SelfCheck();
 
             SwapChildren(plus);
@@ -387,6 +459,41 @@ namespace ExprTree
 
             SwapChildren(newdivi);
         }
+        public override void DifferentiateSteps()
+        {
+            Divi newdivi = new();
+
+            Minus minus = new();
+            Power power = new();
+            newdivi.SetChildren(minus, power);
+
+            INode PowerG = rightchild.Clone();
+            Constant constant = new(2);
+            power.SetChildren(PowerG, constant);
+
+            Multi left = new();
+            Multi right = new();
+            minus.SetChildren(left, right);
+
+            INode leftL = leftchild.Clone();
+            INode leftR = rightchild.Clone();
+            left.SetChildren(leftL, leftR);
+            leftL.DifferentiateSteps();
+            leftL.SelfCheck();
+
+            INode rightL = leftchild.Clone();
+            INode rightR = rightchild.Clone();
+            right.SetChildren(rightL, rightR);
+            rightR.DifferentiateSteps();
+            rightR.SelfCheck();
+
+
+            left.SelfCheck();
+            right.SelfCheck();
+            minus.SelfCheck();
+
+            SwapChildren(newdivi);
+        }
         public override INode Clone()
         {
             /// <summary> This method returns a clone of the called node with a null parent. </summary>
@@ -451,6 +558,25 @@ namespace ExprTree
             SwapChildren(multi1);
             multi1.SelfCheck();
         }
+        public override void DifferentiateSteps()
+        {
+            Multi multi1 = new();
+            Multi multi2 = new();
+
+            INode power = this.Clone();
+            multi1.SetChildren(power, multi2);
+            power.SelfCheck();
+
+            Log log = new();
+            log.Add(leftchild.Clone());
+            INode right = rightchild.Clone();
+            multi2.SetChildren(log, right);
+
+            multi2.DifferentiateSteps();
+
+            SwapChildren(multi1);
+            multi1.SelfCheck();
+        }
         public override INode Clone()
         {
             /// <summary> This method returns a clone of the called node with a null parent. </summary>
@@ -499,6 +625,20 @@ namespace ExprTree
 
             SwapChildren(multi);
         }
+        public override void DifferentiateSteps()
+        {
+            Multi multi = new();
+            Cos cos = new();
+
+            INode left = leftchild.Clone();
+            cos.Add(leftchild.Clone());
+            multi.SetChildren(left, cos);
+            left.DifferentiateSteps();
+            left.SelfCheck();
+
+
+            SwapChildren(multi);
+        }
         public override INode Clone()
         {
             Sin sin = new();
@@ -525,6 +665,23 @@ namespace ExprTree
 
             SwapChildren(multi1);
         }
+        public override void DifferentiateSteps()
+        {
+            Multi multi1 = new();
+            Multi multi2 = new();
+
+            Constant constant = new(-1);
+            multi1.SetChildren(constant, multi2);
+
+            Sin sin = new();
+            INode left = leftchild.Clone();
+            sin.Add(leftchild.Clone());
+            multi2.SetChildren(left, sin);
+            left.DifferentiateSteps();
+            left.SelfCheck();
+
+            SwapChildren(multi1);
+        }
         public override INode Clone()
         {
             Cos cos = new();
@@ -540,6 +697,24 @@ namespace ExprTree
             Divi divi = new();
             multi.SetChildren(divi, leftchild.Clone());
             multi.rightchild.Differentiate();
+
+            Constant one = new(1);
+            Constant two = new(2);
+            Power power = new();
+            Cos cos = new();
+            cos.Add(leftchild.Clone());
+
+            divi.SetChildren(one, power);
+            power.SetChildren(cos, two);
+
+            SwapChildren(multi);
+        }
+        public override void DifferentiateSteps()
+        {
+            Multi multi = new();
+            Divi divi = new();
+            multi.SetChildren(divi, leftchild.Clone());
+            multi.rightchild.DifferentiateSteps();
 
             Constant one = new(1);
             Constant two = new(2);
@@ -584,6 +759,28 @@ namespace ExprTree
 
             SwapChildren(multi1);
         }
+        public override void DifferentiateSteps()
+        {
+            Multi multi1 = new();
+            Constant minus = new(-1);
+            Multi multi2 = new();
+
+            multi1.SetChildren(minus, multi2);
+            Divi divi = new();
+            multi2.SetChildren(divi, leftchild.Clone());
+            multi2.rightchild.DifferentiateSteps();
+
+            Constant one = new(1);
+            Constant two = new(2);
+            Power power = new();
+            Sin sin = new();
+            sin.Add(leftchild.Clone());
+
+            divi.SetChildren(one, power);
+            power.SetChildren(sin, two);
+
+            SwapChildren(multi1);
+        }
         public override INode Clone()
         {
             Cotg cotg = new();
@@ -600,6 +797,30 @@ namespace ExprTree
             Divi divi1 = new();
             multi.SetChildren(divi1, leftchild.Clone());
             multi.rightchild.Differentiate();
+
+            Constant one = new(1);
+            Power power1 = new();
+
+            divi1.SetChildren(one.Clone(), power1);
+
+            Minus minus = new();
+            Constant two = new(2);
+            Power power2 = new();
+            minus.SetChildren(one.Clone(), power2);
+            power2.SetChildren(leftchild.Clone(), two.Clone());
+
+            Divi divi2 = new();
+            power1.SetChildren(minus, divi2);
+            divi2.SetChildren(one.Clone(), two.Clone());
+
+            SwapChildren(multi);
+        }
+        public override void DifferentiateSteps()
+        {
+            Multi multi = new();
+            Divi divi1 = new();
+            multi.SetChildren(divi1, leftchild.Clone());
+            multi.rightchild.DifferentiateSteps();
 
             Constant one = new(1);
             Power power1 = new();
@@ -654,6 +875,33 @@ namespace ExprTree
 
             SwapChildren(multi1);
         }
+        public override void DifferentiateSteps()
+        {
+            Multi multi1 = new();
+            Constant minusone = new(-1);
+            Multi multi = new();
+            Divi divi1 = new();
+            multi1.SetChildren(minusone, multi);
+            multi.SetChildren(divi1, leftchild.Clone());
+            multi.rightchild.DifferentiateSteps();
+
+            Constant one = new(1);
+            Power power1 = new();
+
+            divi1.SetChildren(one.Clone(), power1);
+
+            Minus minus = new();
+            Constant two = new(2);
+            Power power2 = new();
+            minus.SetChildren(one.Clone(), power2);
+            power2.SetChildren(leftchild.Clone(), two.Clone());
+
+            Divi divi2 = new();
+            power1.SetChildren(minus, divi2);
+            divi2.SetChildren(one.Clone(), two.Clone());
+
+            SwapChildren(multi1);
+        }
         public override INode Clone()
         {
             Arccos arccos = new();
@@ -669,6 +917,26 @@ namespace ExprTree
             Divi divi = new();
             multi.SetChildren(divi, leftchild.Clone());
             multi.rightchild.Differentiate();
+
+            Constant one = new(1);
+            Constant two = new(2);
+            Plus plus = new();
+
+            divi.SetChildren(one.Clone(), plus);
+
+            Power power = new();
+            plus.SetChildren(one.Clone(), power);
+            power.SetChildren(leftchild.Clone(), two);
+
+
+            SwapChildren(multi);
+        }
+        public override void DifferentiateSteps()
+        {
+            Multi multi = new();
+            Divi divi = new();
+            multi.SetChildren(divi, leftchild.Clone());
+            multi.rightchild.DifferentiateSteps();
 
             Constant one = new(1);
             Constant two = new(2);
@@ -715,6 +983,29 @@ namespace ExprTree
 
             SwapChildren(multi1);
         }
+        public override void DifferentiateSteps()
+        {
+            Multi multi1 = new();
+            Constant minusone = new(-1);
+            Multi multi = new();
+            multi1.SetChildren(minusone, multi);
+            Divi divi = new();
+            multi.SetChildren(divi, leftchild.Clone());
+            multi.rightchild.DifferentiateSteps();
+
+            Constant one = new(1);
+            Constant two = new(2);
+            Plus plus = new();
+
+            divi.SetChildren(one.Clone(), plus);
+
+            Power power = new();
+            plus.SetChildren(one.Clone(), power);
+            power.SetChildren(leftchild.Clone(), two);
+
+
+            SwapChildren(multi1);
+        }
         public override INode Clone()
         {
             Arccotg arccotg = new();
@@ -747,6 +1038,20 @@ namespace ExprTree
 
             SwapChildren(multi);
         }
+        public override void DifferentiateSteps()
+        {
+            Multi multi = new();
+            Divi divi = new();
+            Constant Dleft = new(1);
+            INode Dright = leftchild.Clone();
+            divi.SetChildren(Dleft, Dright);
+
+            INode Lright = leftchild.Clone();
+            multi.SetChildren(divi, Lright);
+            Lright.DifferentiateSteps();
+
+            SwapChildren(multi);
+        }
         public override INode Clone()
         {
             Log newlog = new();
@@ -756,7 +1061,16 @@ namespace ExprTree
     }
     class Abs : Function
     {
-        public override void Differentiate()
+        public override void Differentiate() //TODO Check if Abs.Diff is correct
+        {
+            Divi divi = new();
+            Abs abs = new();
+            abs.Add(leftchild.Clone());
+            divi.SetChildren(leftchild.Clone(), abs);
+
+            SwapChildren(divi);
+        }
+        public override void DifferentiateSteps()
         {
             Divi divi = new();
             Abs abs = new();
@@ -773,4 +1087,5 @@ namespace ExprTree
             return abs;
         }
     }
+
 }
