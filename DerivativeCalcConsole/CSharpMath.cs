@@ -47,12 +47,9 @@ namespace CSharpMath
             }
             public void DifferentiateSteps() // Thought: Further derivations can be stored in a List, so List[0] is OG func., List[1] is 1st der. etc.
             {
+                Storage.Steps = new();
                 tree.DifferentiateSteps();
                 expr_string = parser.ConvertToInfix(tree);
-                Console.WriteLine();
-                generator.Generate(0);
-                Console.WriteLine();
-                Console.WriteLine("Výsledek je:");
             }
             public bool IsDifferentiable()
             {
@@ -613,50 +610,53 @@ namespace CSharpMath
 
         public class StepGenerator
         {
-            private int pos = 0;
+            List<string> GeneratedSteps = new();
+            private int pos = -1;
             private Parser parser = new("x");
-            public void Generate(int position)
+            void Generate()
             {
-                Console.WriteLine();
-                if (position >= Storage.Steps.Count)
-                    return;
+                pos++;
 
                 List<string> nodes = new();
-                foreach (INode node in Storage.Steps[position])
+                foreach (INode node in Storage.Steps[pos])
                 {
                     nodes.Add(parser.ConvertToInfixHead(node));
                 }
 
-                Console.WriteLine(nodes[0]);
-                switch (Storage.Steps[position][0])
+                GeneratedSteps.Add($"/math {nodes[0]}");
+                switch (Storage.Steps[pos][0])
                 {
                     case Plus:
-                        Console.WriteLine("Pro sčítání platí: f + g = f' + g', tj.:");
-                        Console.WriteLine($"[{nodes[1]}]' + [{nodes[2]}]', což je:");
-                        Generate(position + 1 + pos);
-                        Generate(position + 2 + pos);
-                        Console.WriteLine($"Po úpravě:");
-                        Console.WriteLine($"{nodes[3]} + {nodes[4]}");
-                        Console.WriteLine("-----");
+                        GeneratedSteps.Add(DerivativeCalcConsole.Rules.addition);
+                        Generate();
+                        Generate();
+                        GeneratedSteps.Add("Po úpravě:");
+                        GeneratedSteps.Add($"/math {nodes[3]}+{nodes[4]}");
+                        GeneratedSteps.Add("/sep");
                         break;
                     case Minus:
-                        Console.WriteLine("Pro odčítání platí: f - g = f' - g', tj.:");
-                        Console.WriteLine($"[{nodes[1]}]' - [{nodes[2]}]', což je:");
-                        Generate(position + 1 + pos);
-                        Generate(position + 2 + pos);
-                        Console.WriteLine($"Po úpravě:");
-                        Console.WriteLine($"{nodes[3]} - {nodes[4]}");
-                        Console.WriteLine("-----");
+                        GeneratedSteps.Add(DerivativeCalcConsole.Rules.substraction);
+                        Generate();
+                        Generate();
+                        GeneratedSteps.Add("Po úpravě:");
+                        GeneratedSteps.Add($"{nodes[3]} - {nodes[4]}");
+                        GeneratedSteps.Add("/sep");
                         break;
                     case Constant:
-                        Console.WriteLine($"{nodes[0]} je konstanta, zderivuje se tedy na 0.");
-                        pos = position;
+                        GeneratedSteps.Add(DerivativeCalcConsole.Rules.constant);
                         break;
                     case DiffVariable:
-                        Console.WriteLine($"{nodes[0]} je derivační proměnná, zderivuje se tedy na 1.");
-                        pos = position;
+                        GeneratedSteps.Add(DerivativeCalcConsole.Rules.diffvariable);
                         break;
                 }
+            }
+
+            public List<string> StartGenerating()
+            {
+                pos = -1;
+                Generate();
+
+                return GeneratedSteps;
             }
         }
     }
