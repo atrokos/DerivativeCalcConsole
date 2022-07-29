@@ -8,13 +8,14 @@ namespace DerivativeCalc
     {
         static void Main(string[] args)
         {
-            Stopwatch sw = new();
-            MathExpression vzorec = new("25x+10x^2-6x^3", "x");
-            vzorec.Differentiate();
-            sw.Start();
+
+            Console.OutputEncoding = System.Text.Encoding.Unicode;
+            MathExpression vzorec = new(Console.ReadLine(), "x");
+            if (!vzorec.IsDifferentiable())
+                return;
+            vzorec.DifferentiateSteps();
+            vzorec.Simplify();
             Console.WriteLine(vzorec);
-            sw.Stop();
-            Console.WriteLine(sw.ElapsedMilliseconds);
         }
     }
 }
