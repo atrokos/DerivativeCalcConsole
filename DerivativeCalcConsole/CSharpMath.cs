@@ -613,48 +613,66 @@ namespace CSharpMath
             List<string> GeneratedSteps = new();
             private int pos = -1;
             private Parser parser = new("x");
-            void Generate()
+            private const int marginIncrease = 8;
+            void Generate(int margin)
             {
                 pos++;
 
                 List<string> nodes = new();
                 foreach (INode node in Storage.Steps[pos])
                 {
-                    nodes.Add(parser.ConvertToInfixHead(node));
+                    Entity entity = parser.ConvertToInfixHead(node);
+                    nodes.Add(entity.Latexise());
                 }
-
-                GeneratedSteps.Add($"/math {nodes[0]}");
+                GeneratedSteps.Add($"/margin {margin}");
+                GeneratedSteps.Add($"/math [{nodes[0]}]'");
+                GeneratedSteps.Add("/sep");
                 switch (Storage.Steps[pos][0])
                 {
-                    case Plus:
-                        GeneratedSteps.Add(DerivativeCalcConsole.Rules.addition);
-                        Generate();
-                        Generate();
-                        GeneratedSteps.Add("Po úpravě:");
-                        GeneratedSteps.Add($"/math {nodes[3]}+{nodes[4]}");
-                        GeneratedSteps.Add("/sep");
-                        break;
-                    case Minus:
-                        GeneratedSteps.Add(DerivativeCalcConsole.Rules.substraction);
-                        Generate();
-                        Generate();
-                        GeneratedSteps.Add("Po úpravě:");
-                        GeneratedSteps.Add($"{nodes[3]} - {nodes[4]}");
-                        GeneratedSteps.Add("/sep");
-                        break;
                     case Constant:
                         GeneratedSteps.Add(DerivativeCalcConsole.Rules.constant);
                         break;
                     case DiffVariable:
                         GeneratedSteps.Add(DerivativeCalcConsole.Rules.diffvariable);
                         break;
+                    case Plus:
+                        GeneratedSteps.Add(DerivativeCalcConsole.Rules.addition);
+                        GeneratedSteps.Add($"/math [{nodes[1]}]' + [{nodes[2]}]'");
+                        GeneratedSteps.Add($"/margin {margin}");
+                        Generate(margin + marginIncrease);
+                        Generate(margin + marginIncrease);
+                        GeneratedSteps.Add($"/margin {margin}");
+                        GeneratedSteps.Add("Po úpravě:");
+                        GeneratedSteps.Add($"/math {nodes[3]} + {nodes[4]}");
+                        break;
+                    case Minus:
+                        GeneratedSteps.Add(DerivativeCalcConsole.Rules.substraction);
+                        GeneratedSteps.Add($"/math [{nodes[1]}]' - [{nodes[2]}]'");
+                        GeneratedSteps.Add($"/margin {margin}");
+                        Generate(margin + marginIncrease);
+                        Generate(margin + marginIncrease);
+                        GeneratedSteps.Add($"/margin {margin}");
+                        GeneratedSteps.Add("Po úpravě:");
+                        GeneratedSteps.Add($"/math {nodes[3]} - {nodes[4]}");
+                        break;
+                    case Multi:
+                        GeneratedSteps.Add(DerivativeCalcConsole.Rules.multiplication);
+                        GeneratedSteps.Add($"/math [{nodes[1]}]'*{nodes[2]} + {nodes[1]}*[{nodes[2]}]'");
+                        GeneratedSteps.Add($"/margin {margin}");
+                        Generate(margin + marginIncrease);
+                        Generate(margin + marginIncrease);
+                        GeneratedSteps.Add($"/margin {margin}");
+                        GeneratedSteps.Add("Po úpravě:");
+                        GeneratedSteps.Add($"/math {nodes[3]} + {nodes[4]}");
+                        break;
                 }
             }
 
             public List<string> StartGenerating()
             {
+                GeneratedSteps = new List<string>();
                 pos = -1;
-                Generate();
+                Generate(0);
 
                 return GeneratedSteps;
             }
