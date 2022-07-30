@@ -367,6 +367,8 @@ namespace ExprTree
         }
         public override void DifferentiateSteps()
         {
+            List<INode> list = new() { this.Clone(), leftchild.Clone(), rightchild.Clone() };
+            Storage.Steps.Add(list);
 
             Plus plus = new();
             Multi first = new();
@@ -386,6 +388,9 @@ namespace ExprTree
 
             SwapChildren(plus);
             plus.SelfCheck();
+
+            list.Add(first.Clone());
+            list.Add(second.Clone());
         }
         public override INode Clone()
         {
